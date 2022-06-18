@@ -2,7 +2,9 @@
 
 attribute vec4 a_pos;
 
+uniform mat4 u_mvp;
+
 void main()
 {
-    gl_Position = a_pos;
+    gl_Position =  u_mvp * a_pos;
 };

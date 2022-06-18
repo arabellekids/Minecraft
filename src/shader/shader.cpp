@@ -26,6 +26,37 @@ Shader::~Shader()
     glDeleteProgram(m_id);
 }
 
+void Shader::Bind() const
+{
+    glUseProgram(m_id);
+}
+
+void Shader::UnBind() const
+{
+    glUseProgram(0);
+}
+
+int Shader::GetUniformLocation(const std::string& name) const
+{
+    if(m_uniformLocations.find(name) != m_uniformLocations.end())
+    {
+        return m_uniformLocations[name];
+    }
+
+    int loc = glGetUniformLocation(m_id, name.c_str());
+    m_uniformLocations[name] = loc;
+
+    if(loc == -1)
+    {
+        std::cout << "[WARNING] Uniform: " << name << " not found!\n";
+    }
+
+    return loc;
+}
+
+void Shader::SetUniform1i(const std::string& name, int value) const { glUniform1i(GetUniformLocation(name), value); }
+void Shader::SetUniformMat4(const std::string& name, const glm::mat4& value) const { glUniformMatrix4fv(GetUniformLocation(name), 1, false, &value[0][0]); }
+
 unsigned int Shader::LoadShader(unsigned int type, const std::string& path)
 {
     // Load the file
@@ -120,14 +151,4 @@ bool Shader::CompileShader()
 
     // Program successfully compiled!
     return true;
-}
-
-void Shader::Bind() const
-{
-    glUseProgram(m_id);
-}
-
-void Shader::UnBind() const
-{
-    glUseProgram(0);
 }
