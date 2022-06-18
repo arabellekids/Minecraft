@@ -4,7 +4,7 @@
 
 #include "shader.h"
 
-Shader::Shader(const std::string& vert, const std::string& frag)
+Shader::Shader(const std::string& vert, const std::string& frag) : m_id(0)
 {
     // Create the program
     m_id = glCreateProgram();
@@ -21,7 +21,10 @@ Shader::Shader(const std::string& vert, const std::string& frag)
     glDeleteShader(fragShader);
 }
 
-Shader::~Shader() {}
+Shader::~Shader()
+{
+    glDeleteProgram(m_id);
+}
 
 unsigned int Shader::LoadShader(unsigned int type, const std::string& path)
 {

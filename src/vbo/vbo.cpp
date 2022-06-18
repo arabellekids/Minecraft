@@ -10,7 +10,10 @@ Vbo::Vbo(const std::vector<Vertex>& data, unsigned int usage) : m_id(0)
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * data.size(), data.data(), usage);
 }
 
-Vbo::~Vbo() {}
+Vbo::~Vbo()
+{
+    glDeleteBuffers(1, &m_id);
+}
 
 void Vbo::GenGLBuffer()
 {

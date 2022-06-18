@@ -9,7 +9,10 @@ Ibo::Ibo(const std::vector<unsigned short>& data, unsigned int usage) : m_id(0)
     Bind();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * data.size(), data.data(), usage);
 }
-Ibo::~Ibo() {}
+Ibo::~Ibo()
+{
+    glDeleteBuffers(1, &m_id);
+}
 
 void Ibo::GenGLBuffer()
 {

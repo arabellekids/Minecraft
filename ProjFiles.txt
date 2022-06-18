@@ -1,4 +1,9 @@
 set(FILES 
+    src/vao/bufferLayout.h
+    
+    src/vao/vao.cpp
+    src/vao/vao.h
+
     src/vbo/vbo.cpp
     src/vbo/vbo.h
     

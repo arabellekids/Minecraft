@@ -2,6 +2,7 @@
 #include <GLES3/gl32.h>
 #include <iostream>
 
+#include "vao/vao.h"
 #include "vbo/vbo.h"
 #include "ibo/ibo.h"
 #include "shader/shader.h"
@@ -41,14 +42,19 @@ int main()
     }, GL_STATIC_DRAW);
     vb.Bind();
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+    BufferLayout layout;
+    layout.Push<float>(2);
+
+    Vao va;
+    va.AddBuffer(vb, layout);
 
     Ibo ib({0,1,2}, GL_STATIC_DRAW);
     ib.Bind();
 
     Shader shader("./assets/vert.glsl", "./assets/frag.glsl");
     shader.Bind();
+
+    va.Bind();
 
     while(!SDL_QuitRequested())
     {
