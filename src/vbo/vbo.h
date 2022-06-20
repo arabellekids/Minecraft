@@ -12,6 +12,7 @@ struct Vertex
 class Vbo
 {
 private:
+    std::vector<Vertex> m_data;
     unsigned int m_id;
     
     void GenGLBuffer();
@@ -22,4 +23,6 @@ public:
 
     void Bind() const;
     void UnBind() const;
+
+    inline const std::vector<Vertex>& GetData() const { return m_data; }
 };

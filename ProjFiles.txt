@@ -13,5 +13,17 @@ set(FILES
     src/shader/shader.cpp
     src/shader/shader.h
 
+    src/input/input.cpp
+    src/input/input.h
+
+    src/object/baseObject.cpp
+    src/object/baseObject.h
+
+    src/object/gameObject.cpp
+    src/object/gameObject.h
+    
+    src/object/player.cpp
+    src/object/player.h
+    
     src/main.cpp
 )

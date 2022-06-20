@@ -5,6 +5,7 @@
 class Ibo
 {
 private:
+    std::vector<unsigned short> m_data;
     unsigned int m_id;
     
     void GenGLBuffer();
@@ -15,4 +16,6 @@ public:
 
     void Bind() const;
     void UnBind() const;
+
+    inline const std::vector<unsigned short>& GetData() const { return m_data; }
 };

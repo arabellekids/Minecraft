@@ -12,6 +12,8 @@
 #include "ibo/ibo.h"
 #include "shader/shader.h"
 
+#include "object/player.h"
+
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 #define max(x, y) (((x) > (y)) ? (x) : (y))
 #define clamp(x, a, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
@@ -40,7 +42,11 @@ int main()
     {
         return -1;
     }
-    g_pWindow = SDL_CreateWindow("Minecraft Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
+
+    // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+
+    g_pWindow = SDL_CreateWindow("Minecraft Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 900, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
     if (g_pWindow == nullptr)
     {
         return -1;
@@ -76,7 +82,7 @@ int main()
            GL_STATIC_DRAW);
     ib.Bind();
 
-    Shader shader("./assets/vert.glsl", "./assets/frag.glsl");
+    Shader shader("./assets/shaders/vert.glsl", "./assets/shaders/frag.glsl");
     shader.Bind();
 
     va.Bind();
@@ -88,10 +94,14 @@ int main()
     mvp = glm::identity<glm::mat4>();
 
     // proj = glm::frustum(-2.0f, 2.0f, -1.5f, 1.5f, 1.0f, 100.0f);
-    proj = glm::perspective(90.0f * 0.01745329251994329576923690768489f, 640.0f / 480.0f, 1.0f, 100.0f);
+    int w = 1600, h = 900;
+    float aspect = (float)w / (float)h;
+    proj = glm::perspective(90.0f * 0.01745329251994329576923690768489f, aspect, 1.0f, 100.0f);
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
+
+    Player p;;
 
     bool running = true;
     while (running)
@@ -101,52 +111,9 @@ int main()
             running = false;
         }
 
-        if(SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_A])
-        {
-            glm::vec3 right = {
-                view[0][0],
-                0.0f,
-                view[2][0],
-            };
-            pos -= right * 0.1f;
-        }
-        if(SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_D])
-        {
-            glm::vec3 right = {
-                view[0][0],
-                0.0f,
-                view[2][0],
-            };
-            pos += right * 0.1f;
-        }
-        if(SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_W])
-        {
-            glm::vec3 forward = {
-                view[0][2],
-                0.0f,
-                view[2][2],
-            };
-            pos -= forward * 0.1f;
-        }
-        if(SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_S])
-        {
-            glm::vec3 forward = {
-                view[0][2],
-                0.0f,
-                view[2][2],
-            };
-            pos += forward * 0.1f;
-        }
+        p.Update();
 
-        int x, y;
-        SDL_GetRelativeMouseState(&x, &y);
-
-        rx += y * 0.2f;
-        rx = clamp(rx, -89,89);
-        ry += x * 0.2f;
-
-        rot = glm::rotate(glm::translate(glm::identity<glm::mat4>(), pos), -ry * 0.01745329251994329576923690768489f, {0.0f, 1.0f, 0.0f});
-        view = glm::inverse(glm::rotate(rot, -rx * 0.01745329251994329576923690768489f, {1.0f, 0.0f, 0.0f}));
+        view = glm::inverse(p.GetModel());
         
         mvp = proj * view * model;
         shader.SetUniformMat4("u_mvp", mvp);

@@ -5,6 +5,8 @@
 
 Vbo::Vbo(const std::vector<Vertex>& data, unsigned int usage) : m_id(0)
 {
+    m_data = data;
+    
     GenGLBuffer();
     Bind();
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * data.size(), data.data(), usage);
