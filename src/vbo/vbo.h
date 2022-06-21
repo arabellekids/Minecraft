@@ -7,6 +7,9 @@ struct Vertex
     float x;
     float y;
     float z;
+
+    float u;
+    float v;
 };
 
 class Vbo
@@ -24,5 +27,6 @@ public:
     void Bind() const;
     void UnBind() const;
 
-    inline const std::vector<Vertex>& GetData() const { return m_data; }
+    void SetData(const std::vector<Vertex>& data, bool setData = true);
+    inline std::vector<Vertex>& GetData() { return m_data; }
 };

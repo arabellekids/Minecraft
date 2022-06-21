@@ -1,4 +1,5 @@
 set(FILES 
+    # ------ 3D code ------
     src/vao/bufferLayout.h
     
     src/vao/vao.cpp
@@ -13,6 +14,10 @@ set(FILES
     src/shader/shader.cpp
     src/shader/shader.h
 
+    src/texture/texture.cpp
+    src/texture/texture.h
+
+    # ------ Minecraft code ------
     src/input/input.cpp
     src/input/input.h
 
@@ -25,5 +30,11 @@ set(FILES
     src/object/player.cpp
     src/object/player.h
     
+    src/block/blockPalette.cpp
+    src/block/blockPalette.h
+    
+    src/block/chunk.cpp
+    src/block/chunk.h
+
     src/main.cpp
 )

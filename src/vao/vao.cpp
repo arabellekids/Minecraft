@@ -34,13 +34,13 @@ void Vao::AddBuffer(const Vbo& vb, const BufferLayout& layout)
     auto& elements = layout.GetElements();
     unsigned int stride = layout.GetStride();
 
-    unsigned int* offset = 0;
+    unsigned int offset = 0;
     for(unsigned int i = 0; i < elements.size(); i++)
     {
         auto& element = elements[i];
         
         glEnableVertexAttribArray(i);
-        glVertexAttribPointer(i, element.count, element.type, element.normalized, stride, (const void*)offset);
+        glVertexAttribPointer(i, element.count, element.type, element.normalized, stride, (void*)offset);
         offset += element.size;
     }
 }

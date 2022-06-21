@@ -17,5 +17,6 @@ public:
     void Bind() const;
     void UnBind() const;
 
-    inline const std::vector<unsigned short>& GetData() const { return m_data; }
+    void SetData(const std::vector<unsigned short>& data, bool setData = true);
+    inline std::vector<unsigned short>& GetData() { return m_data; }
 };

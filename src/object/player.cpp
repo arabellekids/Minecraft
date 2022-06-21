@@ -28,7 +28,7 @@ void Player::Update()
             0.0f,
             m_model[2][2],
         };
-        m_pos -= forward * 0.2f;
+        m_pos -= glm::normalize(forward) * 0.2f;
     }
     if(Input::Instance().GetKey(SDL_SCANCODE_S))
     {
@@ -37,7 +37,7 @@ void Player::Update()
             0.0f,
             m_model[2][2],
         };
-        m_pos += forward * 0.2f;
+        m_pos += glm::normalize(forward) * 0.2f;
     }
 
     auto& delta = Input::Instance().GetMouseDelta();

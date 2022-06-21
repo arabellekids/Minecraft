@@ -6,7 +6,7 @@
 Vbo::Vbo(const std::vector<Vertex>& data, unsigned int usage) : m_id(0)
 {
     m_data = data;
-    
+
     GenGLBuffer();
     Bind();
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * data.size(), data.data(), usage);
@@ -37,4 +37,15 @@ void Vbo::Bind() const
 void Vbo::UnBind() const
 {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Vbo::SetData(const std::vector<Vertex>& data, bool setData)
+{
+    Bind();
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * data.size(), data.data(), GL_DYNAMIC_DRAW);
+
+    if(setData)
+    {
+        m_data = data;
+    }
 }

@@ -7,12 +7,14 @@
 
 #include <iostream>
 
-#include "vao/vao.h"
-#include "vbo/vbo.h"
+#include "block/chunk.h"
+#include "object/player.h"
+
 #include "ibo/ibo.h"
 #include "shader/shader.h"
-
-#include "object/player.h"
+#include "texture/texture.h"
+#include "vao/vao.h"
+#include "vbo/vbo.h"
 
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 #define max(x, y) (((x) > (y)) ? (x) : (y))
@@ -20,11 +22,6 @@
 
 SDL_Window *g_pWindow;
 SDL_GLContext g_pCtx;
-
-float rx = 0.0f;
-float ry = 0.0f;
-
-glm::vec3 pos = {0.0f, 0.0f, 0.0f};
 
 void GLErrorCallback(GLenum src, GLenum type, GLuint id,
                      GLenum severity, GLsizei length, const char *msg,
@@ -46,7 +43,7 @@ int main()
     // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
-    g_pWindow = SDL_CreateWindow("Minecraft Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 900, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+    g_pWindow = SDL_CreateWindow("Minecraft Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
     if (g_pWindow == nullptr)
     {
         return -1;
@@ -64,6 +61,8 @@ int main()
 
     glDebugMessageCallback(GLErrorCallback, nullptr);
 
+    { // GL program scope
+    
     Vbo vb({{-5.0, -5.0, 0.0},
             {5.0, -5.0, 0.0},
             {5.0, 5.0, 0.0},
@@ -73,9 +72,9 @@ int main()
 
     BufferLayout layout;
     layout.Push<float>(3);
+    layout.Push<float>(2);
 
-    Vao va;
-    va.AddBuffer(vb, layout);
+    //va.AddBuffer(vb, layout);
 
     Ibo ib({0, 1, 2,
             0, 2, 3},
@@ -85,7 +84,9 @@ int main()
     Shader shader("./assets/shaders/vert.glsl", "./assets/shaders/frag.glsl");
     shader.Bind();
 
-    va.Bind();
+    shader.SetUniform1i("u_tex", 0);
+    Texture tex("./assets/textures/Minecraft-atlas.png", GL_NEAREST);
+    tex.Bind();
 
     glm::mat4 model, view, proj, rot, mvp;
 
@@ -94,14 +95,48 @@ int main()
     mvp = glm::identity<glm::mat4>();
 
     // proj = glm::frustum(-2.0f, 2.0f, -1.5f, 1.5f, 1.0f, 100.0f);
-    int w = 1600, h = 900;
+    int w = 640, h = 480;
     float aspect = (float)w / (float)h;
-    proj = glm::perspective(90.0f * 0.01745329251994329576923690768489f, aspect, 1.0f, 100.0f);
+    proj = glm::perspective(90.0f * 0.01745329251994329576923690768489f, aspect, 0.2f, 100.0f);
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     Player p;;
+
+    Chunk c( {0.0f, -2.0f, 0.0f} );
+    c.GenerateVertices();
+    c.GenerateIndices(p.GetPos());
+
+    std::cout << "Vb size = " << c.GetVb().GetData().size() << "\n";
+    std::cout << "Ib size = " << c.GetSolidIb().GetData().size() << "\n";
+
+    Vao va;
+    va.AddBuffer(c.GetVb(), layout);
+    c.GetSolidIb().Bind();
+    va.Bind();
+    // unsigned int va;
+    // glGenVertexArrays(1, &va);
+    // glBindVertexArray(va);
+
+    // c.GetVb().Bind();
+
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)0);
+    
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)(sizeof(float)*3));
+
+    
+    
+    // glBindVertexArray(va);
+
+    // Vao va;
+    // va.AddBuffer(c.GetVb(), layout);
+
+    //va.Bind();
+
+    glEnable(GL_DEPTH_TEST);
 
     bool running = true;
     while (running)
@@ -118,13 +153,15 @@ int main()
         mvp = proj * view * model;
         shader.SetUniformMat4("u_mvp", mvp);
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+        glDrawElements(GL_TRIANGLES, c.GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
         // glDrawArrays(GL_TRIANGLES, 0, 4);
 
         SDL_GL_SwapWindow(g_pWindow);
     }
+
+    } // End GL program scope
 
     SDL_GL_DeleteContext(g_pCtx);
     SDL_DestroyWindow(g_pWindow);
