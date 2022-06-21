@@ -66,30 +66,16 @@ int main()
 
     { // GL program scope
     
-    Vbo vb({{-5.0, -5.0, 0.0},
-            {5.0, -5.0, 0.0},
-            {5.0, 5.0, 0.0},
-            {-5.0, 5.0, 0.0}},
-           GL_STATIC_DRAW);
-    vb.Bind();
+    // BufferLayout layout;
+    // layout.Push<float>(3);
+    // layout.Push<float>(2);
+    
+    // Shader shader("./assets/shaders/test/vert.glsl", "./assets/shaders/test/frag.glsl");
+    // shader.Bind();
 
-    BufferLayout layout;
-    layout.Push<float>(3);
-    layout.Push<float>(2);
-
-    //va.AddBuffer(vb, layout);
-
-    Ibo ib({0, 1, 2,
-            0, 2, 3},
-           GL_STATIC_DRAW);
-    ib.Bind();
-
-    Shader shader("./assets/shaders/test/vert.glsl", "./assets/shaders/test/frag.glsl");
-    shader.Bind();
-
-    shader.SetUniform1i("u_tex", 0);
-    Texture tex("./assets/textures/Minecraft-atlas.png", GL_NEAREST);
-    tex.Bind();
+    // shader.SetUniform1i("u_tex", 0);
+    // Texture tex("./assets/textures/Minecraft-atlas.png", GL_NEAREST);
+    // tex.Bind();
 
     glm::mat4 model, view, proj, rot, mvp;
 
@@ -108,39 +94,18 @@ int main()
     Player p;
 
     World world;
-    Chunk c;
-    c.GenerateVertices();
-    c.GenerateIndices(p.GetPos());
+    // Chunk c;
+    // c.GenerateVertices();
+    // c.GenerateIndices(p.GetPos());
 
-    std::cout << "Vb size = " << c.GetVb().GetData().size() << "\n";
-    std::cout << "Ib size = " << c.GetSolidIb().GetData().size() << "\n";
-
-    Vao va;
-    va.AddBuffer(c.GetVb(), layout);
-    c.GetSolidIb().Bind();
-    va.Bind();
-
-    // unsigned int va;
-    // glGenVertexArrays(1, &va);
-    // glBindVertexArray(va);
-
-    // c.GetVb().Bind();
-
-    // glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)0);
-    
-    // glEnableVertexAttribArray(1);
-    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)(sizeof(float)*3));
-
-    
-    
-    // glBindVertexArray(va);
+    // std::cout << "Vb size = " << c.GetVb().GetData().size() << "\n";
+    // std::cout << "Ib size = " << c.GetSolidIb().GetData().size() << "\n";
 
     // Vao va;
     // va.AddBuffer(c.GetVb(), layout);
-
-    //va.Bind();
-
+    // c.GetSolidIb().Bind();
+    // va.Bind();
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -164,12 +129,13 @@ int main()
 
         view = glm::inverse(p.GetModel());
         
-        mvp = proj * view * model;
-        shader.SetUniformMat4("u_mvp", mvp);
+        // mvp = proj * view * model;
+        // shader.SetUniformMat4("u_mvp", mvp);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glDrawElements((wireframe) ? GL_LINES : GL_TRIANGLES, c.GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
+        //glDrawElements((wireframe) ? GL_LINES : GL_TRIANGLES, c.GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
+        world.RenderSolid(proj * view);
         // glDrawArrays(GL_TRIANGLES, 0, 4);
 
         SDL_GL_SwapWindow(g_pWindow);

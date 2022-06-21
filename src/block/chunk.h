@@ -1,6 +1,9 @@
 #pragma once
 
+#include <glm/vec2.hpp>
+
 #include "blockPalette.h"
+#include "../vao/vao.h"
 #include "../vbo/vbo.h"
 #include "../ibo/ibo.h"
 
@@ -62,7 +65,10 @@ struct BlockFace
 class Chunk
 {
 private:
+    glm::vec<2, long, glm::defaultp> m_pos;
+
     Vbo m_vb;
+    Vao m_va;
     Ibo m_solidIB;
 
     std::vector<BlockFace> m_solidFaces;
@@ -80,9 +86,17 @@ public:
     void GenerateVertices();
     void GenerateIndices(const glm::vec3& pPos);
 
+    const Vao& GetVa() const { return m_va; }
+    Vao& GetVa() { return m_va; }
+
     const Vbo& GetVb() const { return m_vb; }
     Vbo& GetVb() { return m_vb; }
 
     const Ibo& GetSolidIb() const { return m_solidIB; }
     Ibo& GetSolidIb() { return m_solidIB; }
+
+    const glm::vec<2, long, glm::defaultp>& GetPos() const { return m_pos; }
+    glm::vec<2, long, glm::defaultp>& GetPos() { return m_pos; }
+
+    void Load(const glm::vec<2, long, glm::defaultp>& pos);
 };

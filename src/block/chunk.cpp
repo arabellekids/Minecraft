@@ -3,8 +3,21 @@
 
 #include "chunk.h"
 
-Chunk::Chunk() : m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
+Chunk::Chunk() : m_pos(0, 0), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
+    BufferLayout layout;
+    layout.Push<float>(3);
+    layout.Push<float>(2);
+    
+    m_va.AddBuffer(m_vb, layout);
+}
+
+Chunk::~Chunk() {}
+
+void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
+{
+    m_pos = pos;
+
     m_blocks.Fill(0x00);
     
     for(auto z = 0; z < CHUNK_SIZE_Z; ++z)
@@ -15,18 +28,18 @@ Chunk::Chunk() : m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_bl
         }
     }
 
-    // Place random blocks
-    for(int i = 0; i < 20; ++i)
-    {
-        int x = rand() / (float)RAND_MAX * m_blocks.GetXSize();
-        int y = rand() / (float)RAND_MAX * m_blocks.GetYSize();
-        int z = rand() / (float)RAND_MAX * m_blocks.GetZSize();
+    m_blocks(m_blocks.GetXSize() >> 1, 1, m_blocks.GetZSize() >> 1) = 0x02;
+    
+    // // Place random blocks
+    // for(int i = 0; i < 1; ++i)
+    // {
+    //     int x = rand() / (float)RAND_MAX * m_blocks.GetXSize();
+    //     int y = rand() / (float)RAND_MAX * m_blocks.GetYSize();
+    //     int z = rand() / (float)RAND_MAX * m_blocks.GetZSize();
         
-        m_blocks(x,y,z) = 0x01;
-    }
+    //     m_blocks(x,y,z) = 0x01;
+    // }
 }
-
-Chunk::~Chunk() {}
 
 void Chunk::GenerateVertices()
 {
