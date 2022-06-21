@@ -13,8 +13,8 @@ void GameObject::CalcModel()
     m_model = glm::scale(
         glm::rotate(
             glm::rotate(
-                glm::translate(glm::identity<glm::mat4>(), m_pos), -m_rot.y  * 0.01745329251994329576923690768489f, glm::vec3(0.0f, 1.0f, 0.0f)
-            ), -m_rot.x  * 0.01745329251994329576923690768489f, glm::vec3(1.0f, 0.0f, 0.0f)
+                glm::translate(glm::identity<glm::mat4>(), m_pos), m_rot.y  * 0.01745329251994329576923690768489f, glm::vec3(0.0f, 1.0f, 0.0f)
+            ), m_rot.x  * 0.01745329251994329576923690768489f, glm::vec3(1.0f, 0.0f, 0.0f)
         ), m_scale
     );
 }

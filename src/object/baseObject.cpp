@@ -4,4 +4,4 @@ BaseObject::BaseObject() {}
 BaseObject::~BaseObject() {}
 
 void BaseObject::Update() {}
-void BaseObject::Render() {}
+void BaseObject::RenderSolid() {}

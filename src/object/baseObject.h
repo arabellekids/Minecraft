@@ -7,5 +7,5 @@ public:
     virtual ~BaseObject();
     
     virtual void Update();
-    virtual void Render();
+    virtual void RenderSolid();
 };

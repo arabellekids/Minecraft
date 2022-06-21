@@ -10,6 +10,8 @@
 #include "block/chunk.h"
 #include "object/player.h"
 
+#include "input/input.h"
+
 #include "ibo/ibo.h"
 #include "shader/shader.h"
 #include "texture/texture.h"
@@ -81,7 +83,7 @@ int main()
            GL_STATIC_DRAW);
     ib.Bind();
 
-    Shader shader("./assets/shaders/vert.glsl", "./assets/shaders/frag.glsl");
+    Shader shader("./assets/shaders/test/vert.glsl", "./assets/shaders/test/frag.glsl");
     shader.Bind();
 
     shader.SetUniform1i("u_tex", 0);
@@ -97,14 +99,14 @@ int main()
     // proj = glm::frustum(-2.0f, 2.0f, -1.5f, 1.5f, 1.0f, 100.0f);
     int w = 640, h = 480;
     float aspect = (float)w / (float)h;
-    proj = glm::perspective(90.0f * 0.01745329251994329576923690768489f, aspect, 0.2f, 100.0f);
+    proj = glm::perspectiveLH(90.0f * 0.01745329251994329576923690768489f, aspect, 0.2f, 100.0f);
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     Player p;;
 
-    Chunk c( {0.0f, -2.0f, 0.0f} );
+    Chunk c;
     c.GenerateVertices();
     c.GenerateIndices(p.GetPos());
 
@@ -137,13 +139,21 @@ int main()
     //va.Bind();
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     bool running = true;
+    bool wireframe = false;
     while (running)
     {
-        if (SDL_QuitRequested() | SDL_GetKeyboardState(nullptr)[SDL_SCANCODE_ESCAPE])
+        if (SDL_QuitRequested() | Input::Instance().GetKey(SDL_SCANCODE_ESCAPE))
         {
             running = false;
+        }
+
+        if(Input::Instance().GetKey(SDL_SCANCODE_TAB))
+        {
+            wireframe = !wireframe;
         }
 
         p.Update();
@@ -155,7 +165,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glDrawElements(GL_TRIANGLES, c.GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
+        glDrawElements((wireframe) ? GL_LINES : GL_TRIANGLES, c.GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
         // glDrawArrays(GL_TRIANGLES, 0, 4);
 
         SDL_GL_SwapWindow(g_pWindow);

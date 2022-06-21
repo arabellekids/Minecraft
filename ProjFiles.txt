@@ -36,5 +36,8 @@ set(FILES
     src/block/chunk.cpp
     src/block/chunk.h
 
+    #src/block/world.cpp
+    #src/block/world.h
+
     src/main.cpp
 )

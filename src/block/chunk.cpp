@@ -3,39 +3,29 @@
 
 #include "chunk.h"
 
-Chunk::Chunk(const glm::vec3& pos) : m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW)
+Chunk::Chunk() : m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
-    m_pos = pos;
-
-    for(auto z = 0; z < m_blocks.zSize; ++z)
-    {
-        for(auto y = 0; y < m_blocks.ySize; ++y)
-        {
-            for(auto x = 0; x < m_blocks.xSize; ++x)
-            {
-                m_blocks[z][y][x] = 0;
-            }
-        }
-    }
-
+    m_blocks.Fill(0x00);
+    
     for(auto z = 0; z < CHUNK_SIZE_Z; ++z)
     {
         for(auto x = 0; x < CHUNK_SIZE_X; ++x)
         {
-            m_blocks[z][0][x] = 1;
+            m_blocks(x,0,z) = 0x01;
         }
     }
 
     // Place random blocks
     for(int i = 0; i < 20; ++i)
     {
-        int x = rand() / (float)RAND_MAX * m_blocks.xSize;
-        int y = rand() / (float)RAND_MAX * m_blocks.ySize;
-        int z = rand() / (float)RAND_MAX * m_blocks.zSize;
+        int x = rand() / (float)RAND_MAX * m_blocks.GetXSize();
+        int y = rand() / (float)RAND_MAX * m_blocks.GetYSize();
+        int z = rand() / (float)RAND_MAX * m_blocks.GetZSize();
         
-        m_blocks[z][y][x] = 1;
+        m_blocks(x,y,z) = 0x01;
     }
 }
+
 Chunk::~Chunk() {}
 
 void Chunk::GenerateVertices()
@@ -44,15 +34,15 @@ void Chunk::GenerateVertices()
     m_solidFaces.clear();
 
     // +Y = up, +X = right, -Z = forward
-    for(auto z = 0; z < m_blocks.zSize; ++z)
+    for(auto z = 0; z < m_blocks.GetZSize(); ++z)
     {
-        for(auto y = 0; y < m_blocks.ySize; ++y)
+        for(auto y = 0; y < m_blocks.GetYSize(); ++y)
         {
-            for(auto x = 0; x < m_blocks.xSize; ++x)
+            for(auto x = 0; x < m_blocks.GetXSize(); ++x)
             {
-                if(m_blocks[z][y][x] != 0)
+                if(m_blocks(x,y,z) != 0)
                 {
-                    GenBlock(x,y,z, m_blocks[z][y][x]);
+                    GenBlock(x,y,z, m_blocks(x,y,z));
                 }
             }
         }
@@ -93,48 +83,44 @@ void Chunk::GenBlock(int x, int y, int z, unsigned char block)
     // GenBlockFace(x,y,z, block, BLOCK_SIDE_BOTTOM);
     
     // Front
-    if(z > 0 && m_blocks[z - 1.0f][y][x] == 0)
+    if(z > 0 && m_blocks(x, y, z - 1) == 0)
     {
-        GenBlockFace(x,y,z, block, BLOCK_SIDE_FRONT);
+        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_FRONT);
     }
 
     // Back
-    if(z < CHUNK_SIZE_Z - 1 && m_blocks[z + 1.0f][y][x] == 0)
+    if(z < CHUNK_SIZE_Z - 1 && m_blocks(x, y, z + 1) == 0)
     {
-        GenBlockFace(x,y,z, block, BLOCK_SIDE_BACK);
+        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_BACK);
     }
 
     // Left
-    if(x > 0 && m_blocks[z][y][x - 1.0f] == 0)
+    if(x > 0 && m_blocks(x - 1, y, z) == 0)
     {
-        GenBlockFace(x,y,z, block, BLOCK_SIDE_LEFT);
+        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_LEFT);
     }
 
     // Right
-    if(x < CHUNK_SIZE_X - 1 && m_blocks[z][y][x + 1.0f] == 0)
+    if(x < CHUNK_SIZE_X - 1 && m_blocks(x + 1, y, z) == 0)
     {
-        GenBlockFace(x,y,z, block, BLOCK_SIDE_RIGHT);
+        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_RIGHT);
     }
 
     // Top
-    if(y < CHUNK_SIZE_Y - 1 && m_blocks[z][y + 1.0f][x] == 0)
+    if(y < CHUNK_SIZE_Y - 1 && m_blocks(x, y + 1, z) == 0)
     {
-        GenBlockFace(x,y,z, block, BLOCK_SIDE_TOP);
+        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_TOP);
     }
 
     // Bottom
-    if(y > 0 && m_blocks[z][y - 1.0f][x] == 0)
+    if(y > 0 && m_blocks(x, y - 1, z) == 0)
     {
-        GenBlockFace(x,y,z, block, BLOCK_SIDE_BOTTOM);
+        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_BOTTOM);
     }
 }
 
 void Chunk::GenBlockFace(float x, float y, float z, unsigned char block, BlockSide side)
 {
-    x += m_pos.x;
-    y += m_pos.y;
-    z += m_pos.z;
-    
     // float u1 = 0.0f;
     // float v1 = 0.0f;
     float u1 = GetPaletteBlock(block).GetU(side);

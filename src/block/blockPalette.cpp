@@ -3,7 +3,7 @@
 #include "blockPalette.h"
 
 static std::array<BlockType, PALETTE_SIZE> g_palette = {
-    BlockType( { 0, 0, 0, 0, 1, 0 } ) // Grass
+    BlockType( { 1, 1, 1, 1, 0, 2 } ) // Grass
 };
 
 const std::array<BlockType, PALETTE_SIZE>& GetPalette() { return g_palette; }
