@@ -1,7 +1,7 @@
 #include "../input/input.h"
 #include "player.h"
 
-void Player::Update()
+void Player::Update(const Player& player)
 {
     if(Input::Instance().GetKey(SDL_SCANCODE_A))
     {

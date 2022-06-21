@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "block/chunk.h"
+#include "block/world.h"
 #include "object/player.h"
 
 #include "input/input.h"
@@ -92,7 +93,7 @@ int main()
 
     glm::mat4 model, view, proj, rot, mvp;
 
-    model = glm::translate(glm::identity<glm::mat4>(), {0.0f, 0.0f, -10.0f});
+    model = glm::translate(glm::identity<glm::mat4>(), {0.0f, 0.0f, 0.0f});
     view = glm::identity<glm::mat4>();
     mvp = glm::identity<glm::mat4>();
 
@@ -104,8 +105,9 @@ int main()
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    Player p;;
+    Player p;
 
+    World world;
     Chunk c;
     c.GenerateVertices();
     c.GenerateIndices(p.GetPos());
@@ -117,6 +119,7 @@ int main()
     va.AddBuffer(c.GetVb(), layout);
     c.GetSolidIb().Bind();
     va.Bind();
+
     // unsigned int va;
     // glGenVertexArrays(1, &va);
     // glBindVertexArray(va);
@@ -156,7 +159,8 @@ int main()
             wireframe = !wireframe;
         }
 
-        p.Update();
+        p.Update(p);
+        world.Update(p);
 
         view = glm::inverse(p.GetModel());
         

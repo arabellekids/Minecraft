@@ -18,6 +18,9 @@ set(FILES
     src/texture/texture.h
 
     # ------ Minecraft code ------
+    src/settings/settings.cpp
+    src/settings/settings.h
+
     src/input/input.cpp
     src/input/input.h
 
@@ -36,8 +39,8 @@ set(FILES
     src/block/chunk.cpp
     src/block/chunk.h
 
-    #src/block/world.cpp
-    #src/block/world.h
+    src/block/world.cpp
+    src/block/world.h
 
     src/main.cpp
 )

@@ -33,7 +33,7 @@ void Chunk::GenerateVertices()
     m_vb.GetData().clear();
     m_solidFaces.clear();
 
-    // +Y = up, +X = right, -Z = forward
+    // +Y = up, +X = right, +Z = forward
     for(auto z = 0; z < m_blocks.GetZSize(); ++z)
     {
         for(auto y = 0; y < m_blocks.GetYSize(); ++y)
@@ -75,6 +75,10 @@ void Chunk::GenerateIndices(const glm::vec3& pPos)
 
 void Chunk::GenBlock(int x, int y, int z, unsigned char block)
 {
+    float xPos = x * BS;
+    float yPos = y * BS;
+    float zPos = z * BS;
+    
     // GenBlockFace(x,y,z, block, BLOCK_SIDE_FRONT);
     // GenBlockFace(x,y,z, block, BLOCK_SIDE_BACK);
     // GenBlockFace(x,y,z, block, BLOCK_SIDE_LEFT);
@@ -85,37 +89,37 @@ void Chunk::GenBlock(int x, int y, int z, unsigned char block)
     // Front
     if(z > 0 && m_blocks(x, y, z - 1) == 0)
     {
-        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_FRONT);
+        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_FRONT);
     }
 
     // Back
     if(z < CHUNK_SIZE_Z - 1 && m_blocks(x, y, z + 1) == 0)
     {
-        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_BACK);
+        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_BACK);
     }
 
     // Left
     if(x > 0 && m_blocks(x - 1, y, z) == 0)
     {
-        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_LEFT);
+        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_LEFT);
     }
 
     // Right
     if(x < CHUNK_SIZE_X - 1 && m_blocks(x + 1, y, z) == 0)
     {
-        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_RIGHT);
+        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_RIGHT);
     }
 
     // Top
     if(y < CHUNK_SIZE_Y - 1 && m_blocks(x, y + 1, z) == 0)
     {
-        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_TOP);
+        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_TOP);
     }
 
     // Bottom
     if(y > 0 && m_blocks(x, y - 1, z) == 0)
     {
-        GenBlockFace(x*BS,y*BS,z*BS, block, BLOCK_SIDE_BOTTOM);
+        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_BOTTOM);
     }
 }
 

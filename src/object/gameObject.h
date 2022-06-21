@@ -19,9 +19,15 @@ public:
     GameObject();
     virtual ~GameObject();
 
-    inline const glm::vec3& GetPos() const { return m_pos; }
-    inline const glm::vec3& GetRot() const { return m_rot; }
-    inline const glm::vec3& GetScale() const { return m_scale; }
+    const glm::vec3& GetPos() const { return m_pos; }
+    const glm::vec3& GetRot() const { return m_rot; }
+    const glm::vec3& GetScale() const { return m_scale; }
+    
+    const glm::mat4& GetModel() const { return m_model; }
 
-    inline const glm::mat4& GetModel() const { return m_model; }
+    glm::vec3& GetPos() { return m_pos; }
+    glm::vec3& GetRot() { return m_rot; }
+    glm::vec3& GetScale() { return m_scale; }
+    
+    glm::mat4& GetModel() { return m_model; }
 };

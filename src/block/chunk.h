@@ -80,6 +80,9 @@ public:
     void GenerateVertices();
     void GenerateIndices(const glm::vec3& pPos);
 
+    const Vbo& GetVb() const { return m_vb; }
     Vbo& GetVb() { return m_vb; }
+
+    const Ibo& GetSolidIb() const { return m_solidIB; }
     Ibo& GetSolidIb() { return m_solidIB; }
 };

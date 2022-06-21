@@ -52,17 +52,26 @@ public:
 class World : public BaseObject
 {
 private:
-    Grid2D<Chunk> m_chunks;
-    std::vector<Chunk> m_renderChunks;
+    static World* s_pInstance;
 
-    Shader m_blockShader;
-    Texture m_blockAtlasTex;
+    //Grid2D<Chunk> m_chunks;
+    //std::vector<Chunk> m_renderChunks;
+
+    //Shader m_blockShader;
+    //Texture m_blockAtlasTex;
+
+    void ShiftGrid(BlockSide dir, Player& player);
 public:
     World();
     ~World();
 
-    void Update();
-    void RenderSolid();
+    static World& Instance()
+    {
+        return *s_pInstance;
+    }
 
-    unsigned char GetBlock() const;
+    void Update(Player& player);
+    //void RenderSolid(const glm::mat4& vp);
+
+    //unsigned char GetBlock() const;
 };

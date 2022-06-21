@@ -5,5 +5,5 @@
 class Player : public GameObject
 {
 public:
-    void Update();
+    void Update(const Player& player);
 };
