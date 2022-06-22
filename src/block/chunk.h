@@ -29,9 +29,9 @@ public:
         Resize(_x, _y, _z);
     }
 
-    inline std::size_t GetXSize() const { return m_xSize; }
-    inline std::size_t GetYSize() const { return m_ySize; }
-    inline std::size_t GetZSize() const { return m_zSize; }
+    int GetXSize() const { return m_xSize; }
+    int GetYSize() const { return m_ySize; }
+    int GetZSize() const { return m_zSize; }
 
     void Fill(const T& val)
     {
@@ -76,14 +76,16 @@ private:
 
     Grid3D<unsigned char> m_blocks;
 
+    unsigned char GetBlock(int x, int y, int z, Chunk* n, Chunk* s, Chunk* e, Chunk* w);
+
     void GenBlockFace(float x, float y, float z, unsigned char block, BlockSide side);
-    void GenBlock(int x, int y, int z, unsigned char block);
+    void GenBlock(int x, int y, int z, unsigned char block, Chunk* n, Chunk* s, Chunk* e, Chunk* w);
     void SortFaces(const glm::vec3& pPos);
 public:
     Chunk();
     ~Chunk();
 
-    void GenerateVertices();
+    void GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w);
     void GenerateIndices(const glm::vec3& pPos);
 
     const Vao& GetVa() const { return m_va; }

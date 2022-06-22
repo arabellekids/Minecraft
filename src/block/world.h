@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "../object/baseObject.h"
@@ -17,15 +18,15 @@ private:
     
     std::size_t m_xSize;
     std::size_t m_ySize;
-    
+
 public:
     Grid2D(std::size_t _x, std::size_t _y)
     {
         Resize(_x, _y);
     }
 
-    std::size_t GetXSize() const { return m_xSize; }
-    std::size_t GetYSize() const { return m_ySize; }
+    int GetXSize() const { return m_xSize; }
+    int GetYSize() const { return m_ySize; }
     
     void Fill(const T& val)
     {
@@ -52,23 +53,17 @@ public:
 class World : public BaseObject
 {
 private:
-    static World* s_pInstance;
-
-    Grid2D<Chunk> m_chunks;
+    Grid2D< std::unique_ptr<Chunk> > m_chunks;
     //std::vector<Chunk> m_renderChunks;
 
     Shader m_blockShader;
     Texture m_blockAtlasTex;
 
+    void GenChunkBuffers(int x, int y, const glm::vec3& pPos);
     void ShiftGrid(BlockSide dir, Player& player);
 public:
     World();
     ~World();
-
-    static World& Instance()
-    {
-        return *s_pInstance;
-    }
 
     void Update(Player& player);
     void RenderSolid(const glm::mat4& vp);
