@@ -1,3 +1,4 @@
+#include <cmath>
 #include <GLES3/gl32.h>
 #include <iostream>
 
@@ -18,20 +19,37 @@ void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
 {
     m_pos = pos;
 
-    m_blocks.Fill(0x00);
-    
-    for(auto y = 0; y < m_blocks.GetYSize() - 16; ++y)
+    for(auto z = 0; z < m_blocks.GetZSize(); ++z)
     {
-        for(auto z = 0; z < m_blocks.GetZSize(); ++z)
+        for(auto x = 0; x < m_blocks.GetXSize(); ++x)
         {
-            for(auto x = 0; x < m_blocks.GetXSize(); ++x)
+            float sVal = sinf((z + pos.y * 16) * 0.1f) * 0.5f + 0.5f;
+            float cVal = cosf((x + pos.x * 16) * 0.1f) * 0.5f + 0.5f;
+            float height = (sVal * cVal) * 8;
+        
+            for(auto y = 0; y < m_blocks.GetYSize() - 16; ++y)
             {
-                m_blocks(x,y,z) = 0x01;
+                if(y < height)
+                {
+                    if(y >= height - 1)
+                    {
+                        m_blocks(x,y,z) = 0x01;
+                    }
+                    else
+                    {
+                        m_blocks(x,y,z) = 0x02;
+                    }
+                }
+                else
+                {
+                    m_blocks(x,y,z) = 0x00;
+                }
             }
         }
     }
     
-    m_blocks(m_blocks.GetXSize() >> 1, 16, m_blocks.GetZSize() >> 1) = 0x02;
+    
+    //m_blocks(m_blocks.GetXSize() >> 1, 16, m_blocks.GetZSize() >> 1) = 0x02;
 }
 
 void Chunk::GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w)
