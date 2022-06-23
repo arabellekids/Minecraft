@@ -1,13 +1,17 @@
 #include <GLES3/gl32.h>
-
 #include <glm/ext/matrix_transform.hpp>
+
+#include <iostream>
 
 #include "../object/player.h"
 #include "../settings/settings.h"
 #include "world.h"
 
+#include "../input/input.h"
+
 World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", "assets/shaders/test/frag.glsl"), m_blockAtlasTex("assets/textures/Minecraft-atlas.png", GL_NEAREST)
 {
+    m_blockShader.Bind();
     m_blockShader.SetUniform1i("u_tex", 0);
 
     m_chunks.Resize(Settings::viewDist * 2 + 1, Settings::viewDist * 2 + 1);
@@ -36,30 +40,48 @@ World::~World() {}
 
 void World::Update(Player& player)
 {
-    // Player crossed left
-    while(player.GetPos().x < 0.0f)
-    {
-        ShiftGrid(BLOCK_SIDE_LEFT, player);
-    }
-
-    // Player crossed right
-    while(player.GetPos().x > (CHUNK_SIZE_X * BS))
-    {
-        ShiftGrid(BLOCK_SIDE_RIGHT, player);
-    }
+    // if(Input::Instance().GetKey(SDL_SCANCODE_UP))
+    // {
+    //     ShiftGrid(BLOCK_SIDE_FRONT, player);
+    // }
+    // if(Input::Instance().GetKey(SDL_SCANCODE_DOWN))
+    // {
+    //     ShiftGrid(BLOCK_SIDE_BACK, player);
+    // }
+    // if(Input::Instance().GetKey(SDL_SCANCODE_LEFT))
+    // {
+    //     ShiftGrid(BLOCK_SIDE_LEFT, player);
+    // }
+    // if(Input::Instance().GetKey(SDL_SCANCODE_RIGHT))
+    // {
+    //     ShiftGrid(BLOCK_SIDE_RIGHT, player);
+    // }
+    
+    // return;
 
     // Player crossed forward
-    while(player.GetPos().z > (CHUNK_SIZE_Z * BS))
+    while(player.GetPos().z > (CHUNK_SIZE_Z * BS * 0.5f))
     {
         ShiftGrid(BLOCK_SIDE_FRONT, player);
     }
 
     // Player crossed backward
-    while(player.GetPos().z < 0.0f)
+    while(player.GetPos().z < -(CHUNK_SIZE_Z * BS * 0.5f))
     {
         ShiftGrid(BLOCK_SIDE_BACK, player);
     }
-    
+
+    // Player crossed left
+    while(player.GetPos().x < -(CHUNK_SIZE_X * BS * 0.5f))
+    {
+        ShiftGrid(BLOCK_SIDE_LEFT, player);
+    }
+
+    // Player crossed right
+    while(player.GetPos().x > (CHUNK_SIZE_X * BS * 0.5f))
+    {
+        ShiftGrid(BLOCK_SIDE_RIGHT, player);
+    }
 }
 
 void World::RenderSolid(const glm::mat4& vp)
@@ -70,7 +92,7 @@ void World::RenderSolid(const glm::mat4& vp)
         {
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                m_blockShader.Bind();
+                //m_blockShader.Bind();
                 m_blockAtlasTex.Bind();
 
                 glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
@@ -90,7 +112,7 @@ void World::RenderSolid(const glm::mat4& vp)
         {
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                m_blockShader.Bind();
+                //m_blockShader.Bind();
                 m_blockAtlasTex.Bind();
 
                 glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
@@ -114,6 +136,7 @@ void World::GenChunkBuffers(int x, int y, const glm::vec3& pPos)
     Chunk* w =  ((x - 1) >= 0 ) ? m_chunks(x - 1, y).get() : nullptr;
     
     m_chunks(x,y)->GenerateVertices(n,s,e,w);
+    //m_chunks(x,y)->GenerateVertices(nullptr, nullptr, nullptr, nullptr);
     m_chunks(x,y)->GenerateIndices( pPos );
 }
 
@@ -134,17 +157,20 @@ void World::ShiftGrid(BlockSide dir, Player& player)
 
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                glm::vec2 pos = { m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().x, m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().y + 1 };
+                glm::vec2 pos( m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().x, m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().y + m_chunks.GetYSize() );
                 m_chunks(x, m_chunks.GetYSize() - 1)->Load(pos);
-
-                GenChunkBuffers(x, m_chunks.GetYSize() - 1, player.GetPos());
-                GenChunkBuffers(x, m_chunks.GetYSize() - 2, player.GetPos()); // This chunk now has a neighbor since it has been shifted
-
-                // if(m_chunks.GetYSize() > 1)
-                // {
-                //     GenChunkBuffers(x, m_chunks.GetYSize() - 2, player.GetPos()); // This chunk now has a neighbor since it has been shifted
-                // }
             }
+
+            for(int x = 0; x < m_chunks.GetXSize(); ++x)
+            {
+                GenChunkBuffers(x, m_chunks.GetYSize() - 1, player.GetPos());
+                
+                if(m_chunks.GetYSize() > 1)
+                {
+                    GenChunkBuffers(x, m_chunks.GetYSize() - 2, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                }
+            }
+
 
             break;
         
@@ -158,19 +184,21 @@ void World::ShiftGrid(BlockSide dir, Player& player)
                     std::swap(m_chunks(x, z), m_chunks(x, z - 1));
                 }
             }
+            
+            for(int x = 0; x < m_chunks.GetXSize(); ++x)
+            {
+                glm::vec2 pos( m_chunks(x, 0)->GetPos().x, m_chunks(x, 0)->GetPos().y - m_chunks.GetYSize() );
+                m_chunks(x, 0)->Load(pos);
+            }
 
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                glm::vec2 pos = { m_chunks(x, 0)->GetPos().x, m_chunks(x, 0)->GetPos().y - 1 };
-                m_chunks(x, 0)->Load(pos);
-
                 GenChunkBuffers(x, 0, player.GetPos());
-                GenChunkBuffers(x, 1, player.GetPos()); // This chunk now has a neighbor since it has been shifted
-
-                // if(m_chunks.GetYSize() > 1)
-                // {
-                //     GenChunkBuffers(x, 1, player.GetPos()); // This chunk now has a neighbor since it has been shifted
-                // }
+                
+                if(m_chunks.GetYSize() > 1)
+                {
+                    GenChunkBuffers(x, 1, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                }
             }
 
             break;
@@ -188,16 +216,18 @@ void World::ShiftGrid(BlockSide dir, Player& player)
 
             for(int z = 0; z < m_chunks.GetYSize(); ++z)
             {
-                glm::vec2 pos = { m_chunks(0, z)->GetPos().x - 1, m_chunks(0, z)->GetPos().y };
+                glm::vec2 pos( m_chunks(0, z)->GetPos().x - m_chunks.GetXSize(), m_chunks(0, z)->GetPos().y );
                 m_chunks(0, z)->Load(pos);
+            }
 
+            for(int z = 0; z < m_chunks.GetYSize(); ++z)
+            {
                 GenChunkBuffers(0, z, player.GetPos());
-                GenChunkBuffers(1, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
-
-                // if(m_chunks.GetXSize() > 1)
-                // {
-                //     GenChunkBuffers(1, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
-                // }
+                
+                if(m_chunks.GetXSize() > 1)
+                {
+                    GenChunkBuffers(1, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                }
             }
 
             break;
@@ -215,16 +245,18 @@ void World::ShiftGrid(BlockSide dir, Player& player)
 
             for(int z = 0; z < m_chunks.GetYSize(); ++z)
             {
-                glm::vec2 pos = { m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().x + 1, m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().y };
+                glm::vec2 pos( m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().x + m_chunks.GetXSize(), m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().y );
                 m_chunks(m_chunks.GetXSize() - 1, z)->Load(pos);
+            }
 
+            for(int z = 0; z < m_chunks.GetYSize(); ++z)
+            {
                 GenChunkBuffers(m_chunks.GetXSize() - 1, z, player.GetPos());
-                GenChunkBuffers(m_chunks.GetXSize() - 2, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
                 
-                // if(m_chunks.GetXSize() > 1)
-                // {
-                //     GenChunkBuffers(m_chunks.GetXSize() - 2, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
-                // }
+                if(m_chunks.GetXSize() > 1)
+                {
+                    GenChunkBuffers(m_chunks.GetXSize() - 2, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                }
             }
 
             break;

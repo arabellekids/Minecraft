@@ -44,10 +44,10 @@ public:
         m_grid.resize(y * x);
     }
 
-    const T& operator[] (unsigned int index) const { return m_grid[index]; }
+    const T& operator[] (int index) const { return m_grid[index]; }
 
-    const T& operator() (std::size_t x, std::size_t y) const { return m_grid[y*m_xSize + x]; }
-    T&       operator() (std::size_t x, std::size_t y)       { return m_grid[y*m_xSize + x]; }
+    const T& operator() (int x, int y) const { return m_grid[y*m_xSize + x]; }
+    T&       operator() (int x, int y)       { return m_grid[y*m_xSize + x]; }
 };
 
 class World : public BaseObject

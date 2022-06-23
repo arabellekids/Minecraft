@@ -56,5 +56,5 @@ void Player::Update(const Player& player)
     
     m_rot.y += delta.x * 0.2f;
 
-    CalcModel();
+    //CalcModel();
 }

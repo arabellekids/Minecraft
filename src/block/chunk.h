@@ -50,10 +50,10 @@ public:
         m_grid.resize(z * y * x);
     }
 
-    const T& operator[] (unsigned int index) const { return m_grid[index]; }
+    const T& operator[] (int index) const { return m_grid[index]; }
 
-    const T& operator() (std::size_t x, std::size_t y, std::size_t z) const { return m_grid[(z*m_ySize + y)*m_xSize + x]; }
-    T&       operator() (std::size_t x, std::size_t y, std::size_t z)       { return m_grid[(z*m_ySize + y)*m_xSize + x]; }
+    const T& operator() (int x, int y, int z) const { return m_grid[(z*m_ySize + y)*m_xSize + x]; }
+    T&       operator() (int x, int y, int z)       { return m_grid[(z*m_ySize + y)*m_xSize + x]; }
 };
 
 struct BlockFace

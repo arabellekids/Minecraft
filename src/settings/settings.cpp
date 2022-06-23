@@ -1,4 +1,4 @@
 #include "settings.h"
 
-unsigned int Settings::viewDist = 4;
+unsigned int Settings::viewDist = 5;
 bool Settings::wireframe = false;

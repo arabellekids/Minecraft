@@ -19,16 +19,16 @@ Chunk::~Chunk() {}
 void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
 {
     m_pos = pos;
-
-    for(auto z = 0; z < m_blocks.GetZSize(); ++z)
+    
+    for(int z = 0; z < m_blocks.GetZSize(); ++z)
     {
-        for(auto x = 0; x < m_blocks.GetXSize(); ++x)
+        for(int x = 0; x < m_blocks.GetXSize(); ++x)
         {
             float sVal = sinf((z + pos.y * 16) * 0.1f) * 0.5f + 0.5f;
             float cVal = cosf((x + pos.x * 16) * 0.1f) * 0.5f + 0.5f;
             float height = (sVal * cVal) * 8;
-        
-            for(auto y = 0; y < m_blocks.GetYSize() - 16; ++y)
+            
+            for(int y = 0; y < m_blocks.GetYSize(); ++y)
             {
                 if(y < height)
                 {
@@ -98,37 +98,22 @@ void Chunk::GenerateIndices(const glm::vec3& pPos)
 unsigned char Chunk::GetBlock(int x, int y, int z, Chunk* n, Chunk* s, Chunk* e, Chunk* w)
 {
     // Coord is not in y range of chunks
-    if(y < 0 || y >= m_blocks.GetYSize()) { return 0; }
+    if(y < 0 || y >= CHUNK_SIZE_Y) { return 0; }
     
     // Block is in this chunk
-    if(x >= 0 && z >= 0 && x < m_blocks.GetXSize() && z < m_blocks.GetZSize())
-    {
-        return m_blocks(x, y, z);
-    }
+    if(x >= 0 && z >= 0 && x < CHUNK_SIZE_X && z < CHUNK_SIZE_Z) { return m_blocks(x, y, z); }
 
     // Block is in north chunk
-    if(z >= m_blocks.GetZSize() && n != nullptr)
-    {
-        return n->m_blocks(x,y, z - m_blocks.GetZSize());
-    }
+    if(z >= CHUNK_SIZE_Z && n != nullptr) { return n->m_blocks(x,y, 0); }
     
     // Block is in south chunk
-    if(z < 0 && s != nullptr)
-    {
-        return s->m_blocks(x,y, z + m_blocks.GetZSize());
-    }
+    if(z < 0 && s != nullptr) { return s->m_blocks(x,y, CHUNK_SIZE_Z - 1); }
 
     // Block is in east chunk
-    if(x >= m_blocks.GetXSize() && e != nullptr)
-    {
-        return e->m_blocks(x - m_blocks.GetXSize(), y, z);
-    }
+    if(x >= CHUNK_SIZE_X && e != nullptr) { return e->m_blocks(0, y, z); }
 
     // Block is in west chunk
-    if(x < 0 && w != nullptr)
-    {
-        return w->m_blocks(x + m_blocks.GetXSize(), y, z);
-    }
+    if(x < 0 && w != nullptr) { return w->m_blocks(CHUNK_SIZE_X - 1, y, z); }
     
     // Correct neighbor chunk has not been loaded, assume air
     return 0;
