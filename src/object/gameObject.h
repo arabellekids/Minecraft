@@ -14,10 +14,11 @@ protected:
 
     glm::mat4 m_model;
 
-    void CalcModel();
 public:
     GameObject();
     virtual ~GameObject();
+
+    void CalcModel();
 
     const glm::vec3& GetPos() const { return m_pos; }
     const glm::vec3& GetRot() const { return m_rot; }

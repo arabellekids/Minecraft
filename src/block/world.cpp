@@ -139,6 +139,11 @@ void World::ShiftGrid(BlockSide dir, Player& player)
 
                 GenChunkBuffers(x, m_chunks.GetYSize() - 1, player.GetPos());
                 GenChunkBuffers(x, m_chunks.GetYSize() - 2, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+
+                // if(m_chunks.GetYSize() > 1)
+                // {
+                //     GenChunkBuffers(x, m_chunks.GetYSize() - 2, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                // }
             }
 
             break;
@@ -161,6 +166,11 @@ void World::ShiftGrid(BlockSide dir, Player& player)
 
                 GenChunkBuffers(x, 0, player.GetPos());
                 GenChunkBuffers(x, 1, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+
+                // if(m_chunks.GetYSize() > 1)
+                // {
+                //     GenChunkBuffers(x, 1, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                // }
             }
 
             break;
@@ -183,6 +193,11 @@ void World::ShiftGrid(BlockSide dir, Player& player)
 
                 GenChunkBuffers(0, z, player.GetPos());
                 GenChunkBuffers(1, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+
+                // if(m_chunks.GetXSize() > 1)
+                // {
+                //     GenChunkBuffers(1, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                // }
             }
 
             break;
@@ -205,6 +220,11 @@ void World::ShiftGrid(BlockSide dir, Player& player)
 
                 GenChunkBuffers(m_chunks.GetXSize() - 1, z, player.GetPos());
                 GenChunkBuffers(m_chunks.GetXSize() - 2, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                
+                // if(m_chunks.GetXSize() > 1)
+                // {
+                //     GenChunkBuffers(m_chunks.GetXSize() - 2, z, player.GetPos()); // This chunk now has a neighbor since it has been shifted
+                // }
             }
 
             break;

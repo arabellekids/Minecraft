@@ -129,6 +129,8 @@ int main()
         p.Update(p);
         world.Update(p);
 
+        p.CalcModel();
+
         view = glm::inverse(p.GetModel());
         
         // mvp = proj * view * model;
