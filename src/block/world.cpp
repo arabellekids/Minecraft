@@ -64,21 +64,44 @@ void World::Update(Player& player)
 
 void World::RenderSolid(const glm::mat4& vp)
 {
-    for(int z = 0; z < m_chunks.GetYSize(); ++z)
+    if(!Settings::wireframe)
     {
-        for(int x = 0; x < m_chunks.GetXSize(); ++x)
+        for(int z = 0; z < m_chunks.GetYSize(); ++z)
         {
-            m_blockShader.Bind();
-            m_blockAtlasTex.Bind();
+            for(int x = 0; x < m_chunks.GetXSize(); ++x)
+            {
+                m_blockShader.Bind();
+                m_blockAtlasTex.Bind();
 
-            glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
-            m_blockShader.SetUniformMat4("u_mvp", vp * model);
+                glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
+                m_blockShader.SetUniformMat4("u_mvp", vp * model);
 
-            m_chunks(x,z)->GetVa().Bind();
-            m_chunks(x,z)->GetSolidIb().Bind();
+                m_chunks(x,z)->GetVa().Bind();
+                m_chunks(x,z)->GetSolidIb().Bind();
 
-            glDrawElements(GL_TRIANGLES, m_chunks(x,z)->GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
+                glDrawElements(GL_TRIANGLES, m_chunks(x,z)->GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
 
+            }
+        }
+    }
+    else
+    {
+        for(int z = 0; z < m_chunks.GetYSize(); ++z)
+        {
+            for(int x = 0; x < m_chunks.GetXSize(); ++x)
+            {
+                m_blockShader.Bind();
+                m_blockAtlasTex.Bind();
+
+                glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
+                m_blockShader.SetUniformMat4("u_mvp", vp * model);
+
+                m_chunks(x,z)->GetVa().Bind();
+                m_chunks(x,z)->GetSolidIb().Bind();
+
+                glDrawElements(GL_LINES, m_chunks(x,z)->GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
+
+            }
         }
     }
 }

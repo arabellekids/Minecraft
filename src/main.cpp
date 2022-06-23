@@ -19,6 +19,8 @@
 #include "vao/vao.h"
 #include "vbo/vbo.h"
 
+#include "settings/settings.h"
+
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 #define max(x, y) (((x) > (y)) ? (x) : (y))
 #define clamp(x, a, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
@@ -111,7 +113,6 @@ int main()
     glCullFace(GL_BACK);
 
     bool running = true;
-    bool wireframe = false;
     while (running)
     {
         if (SDL_QuitRequested() | Input::Instance().GetKey(SDL_SCANCODE_ESCAPE))
@@ -121,7 +122,8 @@ int main()
 
         if(Input::Instance().GetKey(SDL_SCANCODE_TAB))
         {
-            wireframe = !wireframe;
+            Settings::wireframe = !Settings::wireframe;
+            SDL_Delay(170);
         }
 
         p.Update(p);
