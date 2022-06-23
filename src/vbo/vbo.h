@@ -11,7 +11,7 @@ struct Vertex
     float u;
     float v;
 
-    float light;
+    float light = 0.0f;
 };
 
 class Vbo

@@ -42,5 +42,8 @@ set(FILES
     src/block/world.cpp
     src/block/world.h
 
+    src/skybox/skybox.cpp
+    src/skybox/skybox.h
+
     src/main.cpp
 )

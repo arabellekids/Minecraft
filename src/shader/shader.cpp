@@ -55,6 +55,7 @@ int Shader::GetUniformLocation(const std::string& name) const
 }
 
 void Shader::SetUniform1i(const std::string& name, int value) const { glUniform1i(GetUniformLocation(name), value); }
+void Shader::SetUniform1f(const std::string& name, float value) const { glUniform1f(GetUniformLocation(name), value); }
 void Shader::SetUniformMat4(const std::string& name, const glm::mat4& value) const { glUniformMatrix4fv(GetUniformLocation(name), 1, false, &value[0][0]); }
 
 unsigned int Shader::LoadShader(unsigned int type, const std::string& path)

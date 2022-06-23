@@ -11,7 +11,6 @@
 
 World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", "assets/shaders/test/frag.glsl"), m_blockAtlasTex("assets/textures/Minecraft-atlas.png", GL_NEAREST)
 {
-    m_blockShader.Bind();
     m_blockShader.SetUniform1i("u_tex", 0);
 
     m_chunks.Resize(Settings::viewDist * 2 + 1, Settings::viewDist * 2 + 1);
@@ -86,15 +85,15 @@ void World::Update(Player& player)
 
 void World::RenderSolid(const glm::mat4& vp)
 {
+    m_blockShader.Bind();
+    m_blockAtlasTex.Bind();
+    
     if(!Settings::wireframe)
     {
         for(int z = 0; z < m_chunks.GetYSize(); ++z)
         {
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                //m_blockShader.Bind();
-                m_blockAtlasTex.Bind();
-
                 glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
                 m_blockShader.SetUniformMat4("u_mvp", vp * model);
 
@@ -112,9 +111,6 @@ void World::RenderSolid(const glm::mat4& vp)
         {
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                //m_blockShader.Bind();
-                m_blockAtlasTex.Bind();
-
                 glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
                 m_blockShader.SetUniformMat4("u_mvp", vp * model);
 

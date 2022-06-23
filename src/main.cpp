@@ -21,6 +21,8 @@
 
 #include "settings/settings.h"
 
+#include "skybox/skybox.h"
+
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 #define max(x, y) (((x) > (y)) ? (x) : (y))
 #define clamp(x, a, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
@@ -48,7 +50,7 @@ int main()
     // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
-    g_pWindow = SDL_CreateWindow("Minecraft Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
+    g_pWindow = SDL_CreateWindow("Minecraft Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 900, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
     if (g_pWindow == nullptr)
     {
         return -1;
@@ -61,32 +63,23 @@ int main()
 
     SDL_GL_SetSwapInterval(1);
 
-    glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+    glClearColor(0.4f, 0.6f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glDebugMessageCallback(GLErrorCallback, nullptr);
 
     { // GL program scope
-    
-    // BufferLayout layout;
-    // layout.Push<float>(3);
-    // layout.Push<float>(2);
-    
-    // Shader shader("./assets/shaders/test/vert.glsl", "./assets/shaders/test/frag.glsl");
-    // shader.Bind();
 
-    // shader.SetUniform1i("u_tex", 0);
-    // Texture tex("./assets/textures/Minecraft-atlas.png", GL_NEAREST);
-    // tex.Bind();
+    Skybox sky("assets/textures/Skybox2.png");
 
     glm::mat4 model, view, proj, rot, mvp;
 
-    model = glm::translate(glm::identity<glm::mat4>(), {0.0f, 0.0f, 0.0f});
+    model = glm::scale(glm::translate(glm::identity<glm::mat4>(), {0.0f, 0.0f, 0.0f}), {3.0f, 3.0f, 3.0f});
     view = glm::identity<glm::mat4>();
     mvp = glm::identity<glm::mat4>();
 
     // proj = glm::frustum(-2.0f, 2.0f, -1.5f, 1.5f, 1.0f, 100.0f);
-    int w = 640, h = 480;
+    int w = 1600, h = 900;
     float aspect = (float)w / (float)h;
     proj = glm::perspectiveLH(90.0f * 0.01745329251994329576923690768489f, aspect, 0.2f, 100.0f);
 
@@ -96,23 +89,14 @@ int main()
     Player p;
 
     World world;
-    // Chunk c;
-    // c.GenerateVertices();
-    // c.GenerateIndices(p.GetPos());
 
-    // std::cout << "Vb size = " << c.GetVb().GetData().size() << "\n";
-    // std::cout << "Ib size = " << c.GetSolidIb().GetData().size() << "\n";
-
-    // Vao va;
-    // va.AddBuffer(c.GetVb(), layout);
-    // c.GetSolidIb().Bind();
-    // va.Bind();
-    
-    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
     bool running = true;
+    float t = 1.0f;
+    float inc = -0.002f;
+
     while (running)
     {
         if (SDL_QuitRequested() | Input::Instance().GetKey(SDL_SCANCODE_ESCAPE))
@@ -132,16 +116,23 @@ int main()
         p.CalcModel();
 
         view = glm::inverse(p.GetModel());
+        glm::mat4 vp = proj * view;
         
-        // mvp = proj * view * model;
-        // shader.SetUniformMat4("u_mvp", mvp);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //glDrawElements((wireframe) ? GL_LINES : GL_TRIANGLES, c.GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
-        world.RenderSolid(proj * view);
-        // glDrawArrays(GL_TRIANGLES, 0, 4);
+        // Draw the skybox
+        sky.Draw(vp, p.GetPos(), t);
+        
+        t += inc;
+        if(t > 1.0f || t < 0.0f)
+        {
+            inc = -inc;
+            if(inc > 0) { t = 0.0f; }
+            else if(inc < 0) { t = 1.0f; }
+        }
 
+        world.RenderSolid(vp);
+        
         SDL_GL_SwapWindow(g_pWindow);
     }
 

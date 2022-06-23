@@ -23,5 +23,6 @@ public:
     void UnBind() const;
 
     void SetUniform1i(const std::string& name, int value) const;
+    void SetUniform1f(const std::string& name, float value) const;
     void SetUniformMat4(const std::string& name, const glm::mat4& value) const;
 };
