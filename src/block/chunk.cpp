@@ -7,8 +7,9 @@
 Chunk::Chunk() : m_pos(0, 0), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
     BufferLayout layout;
-    layout.Push<float>(3);
-    layout.Push<float>(2);
+    layout.Push<float>(3); // x,y,z
+    layout.Push<float>(2); // u,v
+    layout.Push<float>(1); // light
     
     m_va.AddBuffer(m_vb, layout);
 }
@@ -47,9 +48,6 @@ void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
             }
         }
     }
-    
-    
-    //m_blocks(m_blocks.GetXSize() >> 1, 16, m_blocks.GetZSize() >> 1) = 0x02;
 }
 
 void Chunk::GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w)
@@ -199,55 +197,55 @@ void Chunk::GenBlockFace(float x, float y, float z, unsigned char block, BlockSi
     switch (side)
     {
         case BLOCK_SIDE_FRONT:
-            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u1,v1} );
-            m_vb.GetData().push_back( { x+BS, y,    z+BS, u1,v2} );
-            m_vb.GetData().push_back( { x,    y,    z+BS, u2,v2} );
-            m_vb.GetData().push_back( { x,    y+BS, z+BS, u2,v1} );
+            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u1,v1, 0.8f} );
+            m_vb.GetData().push_back( { x+BS, y,    z+BS, u1,v2, 0.8f} );
+            m_vb.GetData().push_back( { x,    y,    z+BS, u2,v2, 0.8f} );
+            m_vb.GetData().push_back( { x,    y+BS, z+BS, u2,v1, 0.8f} );
 
             m_solidFaces.push_back( { index, {x+HALF_BS, y+HALF_BS, z+BS} } );
             break;
         
         case BLOCK_SIDE_BACK:
-            m_vb.GetData().push_back( { x,    y+BS, z, u1,v1} );
-            m_vb.GetData().push_back( { x,    y,    z, u1,v2} );
-            m_vb.GetData().push_back( { x+BS, y,    z, u2,v2} );
-            m_vb.GetData().push_back( { x+BS, y+BS, z, u2,v1} );
+            m_vb.GetData().push_back( { x,    y+BS, z, u1,v1, 0.8f} );
+            m_vb.GetData().push_back( { x,    y,    z, u1,v2, 0.8f} );
+            m_vb.GetData().push_back( { x+BS, y,    z, u2,v2, 0.8f} );
+            m_vb.GetData().push_back( { x+BS, y+BS, z, u2,v1, 0.8f} );
 
             m_solidFaces.push_back( { index, {x+HALF_BS, y+HALF_BS, z} } );
             break;
         
         case BLOCK_SIDE_LEFT:
-            m_vb.GetData().push_back( { x, y+BS, z+BS, u1,v1} );
-            m_vb.GetData().push_back( { x, y,    z+BS, u1,v2} );
-            m_vb.GetData().push_back( { x, y,    z,    u2,v2} );
-            m_vb.GetData().push_back( { x, y+BS, z,    u2,v1} );
+            m_vb.GetData().push_back( { x, y+BS, z+BS, u1,v1, 0.9f} );
+            m_vb.GetData().push_back( { x, y,    z+BS, u1,v2, 0.9f} );
+            m_vb.GetData().push_back( { x, y,    z,    u2,v2, 0.9f} );
+            m_vb.GetData().push_back( { x, y+BS, z,    u2,v1, 0.9f} );
 
             m_solidFaces.push_back( { index, {x, y+HALF_BS, z+HALF_BS} } );
             break;
         
         case BLOCK_SIDE_RIGHT:
-            m_vb.GetData().push_back( { x+BS, y+BS, z,    u1,v1} );
-            m_vb.GetData().push_back( { x+BS, y,    z,    u1,v2} );
-            m_vb.GetData().push_back( { x+BS, y,    z+BS, u2,v2} );
-            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u2,v1} );
+            m_vb.GetData().push_back( { x+BS, y+BS, z,    u1,v1, 0.9f} );
+            m_vb.GetData().push_back( { x+BS, y,    z,    u1,v2, 0.9f} );
+            m_vb.GetData().push_back( { x+BS, y,    z+BS, u2,v2, 0.9f} );
+            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u2,v1, 0.9f} );
 
             m_solidFaces.push_back( { index, {x+BS, y+HALF_BS, z+HALF_BS} } );
             break;
         
         case BLOCK_SIDE_TOP:
-            m_vb.GetData().push_back( { x,    y+BS, z+BS, u1,v1} );
-            m_vb.GetData().push_back( { x,    y+BS, z,    u1,v2} );
-            m_vb.GetData().push_back( { x+BS, y+BS, z,    u2,v2} );
-            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u2,v1} );
+            m_vb.GetData().push_back( { x,    y+BS, z+BS, u1,v1, 1.0f} );
+            m_vb.GetData().push_back( { x,    y+BS, z,    u1,v2, 1.0f} );
+            m_vb.GetData().push_back( { x+BS, y+BS, z,    u2,v2, 1.0f} );
+            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u2,v1, 1.0f} );
 
             m_solidFaces.push_back( { index, {x+HALF_BS, y+BS, z+HALF_BS} } );
             break;
         
         case BLOCK_SIDE_BOTTOM:
-            m_vb.GetData().push_back( { x,    y, z,    u1,v1} );
-            m_vb.GetData().push_back( { x,    y, z+BS, u1,v2} );
-            m_vb.GetData().push_back( { x+BS, y, z+BS, u2,v2} );
-            m_vb.GetData().push_back( { x+BS, y, z,    u2,v1} );
+            m_vb.GetData().push_back( { x,    y, z,    u1,v1, 0.6f} );
+            m_vb.GetData().push_back( { x,    y, z+BS, u1,v2, 0.6f} );
+            m_vb.GetData().push_back( { x+BS, y, z+BS, u2,v2, 0.6f} );
+            m_vb.GetData().push_back( { x+BS, y, z,    u2,v1, 0.6f} );
 
             m_solidFaces.push_back( { index, {x+HALF_BS, y, z+HALF_BS} } );
             break;

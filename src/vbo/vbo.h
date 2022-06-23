@@ -10,6 +10,8 @@ struct Vertex
 
     float u;
     float v;
+
+    float light;
 };
 
 class Vbo
