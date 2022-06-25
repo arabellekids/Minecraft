@@ -11,6 +11,8 @@
 
 Chunk::Chunk() : m_pos(0, 0), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
+    m_isLoading = false;
+    
     BufferLayout layout;
     layout.Push<float>(3); // x,y,z
     layout.Push<float>(2); // u,v
@@ -24,8 +26,7 @@ Chunk::~Chunk() {}
 void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
 {
     m_pos = pos;
-    m_isLoading = false;
-
+    
     long chunkX = pos.x * CHUNK_SIZE_X;
     long chunkZ = pos.y * CHUNK_SIZE_Z;
 

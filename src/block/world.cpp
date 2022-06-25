@@ -221,7 +221,7 @@ void World::ShiftGrid(BlockSide dir, Player& player)
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
                 QueueChunk(m_chunks(x, 0)->GetPos().x,
-                m_chunks(x, 0)->GetPos().y + m_chunks.GetYSize(),
+                m_chunks(x, 0)->GetPos().y - m_chunks.GetYSize(),
                 x, 0);
             }
 
