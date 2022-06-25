@@ -145,14 +145,14 @@ void World::LoadChunks(Player& player)
         m_chunks(chunkX, chunkY)->Load(m_loadingChunks[i]->pos);
         GenChunkBuffers(chunkX, chunkY, player.GetPos());
 
+        m_chunks(m_loadingChunks[i]->chunkIndex.x, m_loadingChunks[i]->chunkIndex.y)->SetLoading(false);
+        
         // Update the chunks 4 neighbors
         
         if(chunkX > 0 && !m_chunks(chunkX - 1, chunkY)->GetLoading()) { GenChunkBuffers(chunkX - 1, chunkY, player.GetPos()); }
         if((chunkX + 1) < m_chunks.GetXSize() && !m_chunks(chunkX + 1, chunkY)->GetLoading()) { GenChunkBuffers(chunkX + 1, chunkY, player.GetPos()); }
         if(chunkY > 0 && !m_chunks(chunkX, chunkY - 1)->GetLoading()) { GenChunkBuffers(chunkX, chunkY - 1, player.GetPos()); }
         if((chunkY + 1) < m_chunks.GetYSize() && !m_chunks(chunkX, chunkY + 1)->GetLoading()) { GenChunkBuffers(chunkX, chunkY + 1, player.GetPos()); }
-
-        m_chunks(m_loadingChunks[i]->chunkIndex.x, m_loadingChunks[i]->chunkIndex.y)->SetLoading(false);
         
         m_loadingChunks.pop_back();
     }

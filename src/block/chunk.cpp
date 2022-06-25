@@ -34,10 +34,6 @@ void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
     {
         for(int x = 0; x < CHUNK_SIZE_X; ++x)
         {
-            // float landNoise = 32 + Settings::noise.noise2D((chunkX + x) * (1 / 64.0f), (chunkZ + z) * (1 / 64.0f)) * 16.0;
-            // float mountainNoise = max( Settings::noise.noise2D((chunkX + x) * (1 / 128.0f), (chunkZ + z) * (1 / 128.0f)) * 96.0 - 32.0f, -4.0f);
-            // float height = landNoise + mountainNoise;
-            
             float squashingFactor = 0.03f;
             float heightOffset = 32.0f;
             
@@ -47,61 +43,38 @@ void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
 
                 if(density > 0)
                 {
-                    m_blocks(x,y,z) = 0x02;
+                    m_blocks(x,y,z) = BLOCK_STONE;
                 }
                 else
                 {
-                    m_blocks(x,y,z) = 0x00;
+                    m_blocks(x,y,z) = BLOCK_AIR;
                 }
+            }
+        }
+    }
 
-                // if(y < height)
-                // {
-                //     m_blocks(x,y,z) = 0x02;
-                // }
-                // else
-                // {
-                //     if(y < 25)
-                //     {
-                //         m_blocks(x,y,z) = 0x03;
-                //     }
-                //     else
-                //     {
-                //     m_blocks(x,y,z) = 0x00;
-                //     }
-                // }
-                
-                // float blockChance = 1.0f;
-                // if(y > yOffset - steepness)
-                // {
-                //     if( y > yOffset + steepness)
-                //     {
-                //         blockChance = 0.0f;
-                //     }
-                //     else
-                //     {
-                //         float t = (y - (yOffset - steepness)) / steepness;
-                //         //std::cout << "T = " << t << "\n";
-                //         blockChance = 1.0f - t;
-                //     }
-                // }
+    // Add grass
+    for(int z = 0; z < CHUNK_SIZE_Z; ++z)
+    {
+        for(int x = 0; x < CHUNK_SIZE_X; ++x)
+        {
+            int grassLayers = 0;
+            for(int y = CHUNK_SIZE_Y - 1; y > 0; --y)
+            {
+                if(m_blocks(x,y,z) != 0)
+                {
+                    if(y < CHUNK_SIZE_Y && m_blocks(x,y + 1,z) == BLOCK_AIR)
+                    {
+                        m_blocks(x,y,z) = BLOCK_GRASS;
+                    }
+                    else
+                    {
+                        m_blocks(x,y,z) = BLOCK_DIRT;
+                    }
+                    grassLayers++;
 
-                // float val = Settings::noise.noise3D_01((chunkX + x) * 0.01f, y * 0.01f, (chunkZ + z) * 0.01f);
-                
-                // if(val < blockChance)
-                // {
-                //     m_blocks(x,y,z) = 0x02;
-                // }
-                // else
-                // {
-                //     if(y < 36)
-                //     {
-                //         //m_blocks(x,y,z) = 0x03;
-                //     }
-                //     else
-                //     {
-                //         m_blocks(x,y,z) = 0x00;
-                //     }
-                // }
+                    if(grassLayers >= 5) { break; }
+                }
             }
         }
     }

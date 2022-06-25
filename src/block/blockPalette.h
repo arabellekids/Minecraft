@@ -1,11 +1,10 @@
 #pragma once
 
 #include <array>
+#include <vector>
 #include <glm/vec3.hpp>
 
 #include "../vbo/vbo.h"
-
-#define PALETTE_SIZE 3
 
 enum BlockSide
 {
@@ -15,6 +14,15 @@ enum BlockSide
     BLOCK_SIDE_RIGHT  = 3,
     BLOCK_SIDE_TOP    = 4,
     BLOCK_SIDE_BOTTOM = 5
+};
+
+enum BlockID
+{
+    BLOCK_AIR = 0x00,
+    BLOCK_GRASS = 0x01,
+    BLOCK_DIRT = 0x02,
+    BLOCK_WATER = 0x03,
+    BLOCK_STONE = 0x04
 };
 
 class BlockType
@@ -29,5 +37,5 @@ public:
     float GetV(BlockSide side) const;
 };
 
-const std::array<BlockType, PALETTE_SIZE>& GetPalette();
+const std::vector<BlockType>& GetPalette();
 const BlockType& GetPaletteBlock(unsigned int index);

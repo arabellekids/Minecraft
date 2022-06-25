@@ -2,13 +2,14 @@
 
 #include "blockPalette.h"
 
-static std::array<BlockType, PALETTE_SIZE> g_palette = {
+static std::vector<BlockType> g_palette = {
     BlockType( { 1, 1, 1, 1, 0, 2 } ), // Grass
     BlockType( { 2, 2, 2, 2, 2, 2 } ), // Dirt
-    BlockType( { 3, 3, 3, 3, 3, 3 } ) // Water
+    BlockType( { 3, 3, 3, 3, 3, 3 } ), // Water
+    BlockType( { 4, 4, 4, 4, 4, 4 } ) // Stone
 };
 
-const std::array<BlockType, PALETTE_SIZE>& GetPalette() { return g_palette; }
+const std::vector<BlockType>& GetPalette() { return g_palette; }
 const BlockType& GetPaletteBlock(unsigned int index) { return g_palette[index - 1]; }
 
 BlockType::BlockType(const std::array<int, 6>& textures)
