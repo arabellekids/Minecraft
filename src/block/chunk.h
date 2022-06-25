@@ -11,7 +11,7 @@ const float BS = 1.0f; // Block scale
 const float HALF_BS = BS * 0.5f; // Half block scale
 
 const int CHUNK_SIZE_X = 16;
-const int CHUNK_SIZE_Y = 32;
+const int CHUNK_SIZE_Y = 128;
 const int CHUNK_SIZE_Z = 16;
 
 template<typename T>

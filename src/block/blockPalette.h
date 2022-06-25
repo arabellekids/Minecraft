@@ -5,7 +5,7 @@
 
 #include "../vbo/vbo.h"
 
-#define PALETTE_SIZE 2
+#define PALETTE_SIZE 3
 
 enum BlockSide
 {

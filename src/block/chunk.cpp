@@ -3,6 +3,11 @@
 #include <iostream>
 
 #include "chunk.h"
+#include "../settings/settings.h"
+
+#define max(x,y) (x > y) ? (x) : (y)
+#define min(x,y) (x < y) ? (x) : (y)
+#define abs(x) ((x) > 0) ? (x) : (-x)
 
 Chunk::Chunk() : m_pos(0, 0), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
@@ -19,32 +24,82 @@ Chunk::~Chunk() {}
 void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
 {
     m_pos = pos;
-    
-    for(int z = 0; z < m_blocks.GetZSize(); ++z)
+
+    long chunkX = pos.x * CHUNK_SIZE_X;
+    long chunkZ = pos.y * CHUNK_SIZE_Z;
+
+    for(int z = 0; z < CHUNK_SIZE_Z; ++z)
     {
-        for(int x = 0; x < m_blocks.GetXSize(); ++x)
+        for(int x = 0; x < CHUNK_SIZE_X; ++x)
         {
-            float sVal = sinf((z + pos.y * 16) * 0.1f) * 0.5f + 0.5f;
-            float cVal = cosf((x + pos.x * 16) * 0.1f) * 0.5f + 0.5f;
-            float height = (sVal * cVal) * 8;
+            // float landNoise = 32 + Settings::noise.noise2D((chunkX + x) * (1 / 64.0f), (chunkZ + z) * (1 / 64.0f)) * 16.0;
+            // float mountainNoise = max( Settings::noise.noise2D((chunkX + x) * (1 / 128.0f), (chunkZ + z) * (1 / 128.0f)) * 96.0 - 32.0f, -4.0f);
+            // float height = landNoise + mountainNoise;
             
-            for(int y = 0; y < m_blocks.GetYSize(); ++y)
+            float squashingFactor = 0.03f;
+            float heightOffset = 32.0f;
+            
+            for(int y = 0; y < CHUNK_SIZE_Y; ++y)
             {
-                if(y < height)
+                float density = Settings::noise.noise3D((chunkX + x) * 0.0625f, y * 0.0625f, (chunkZ + z) * 0.0625f) + (heightOffset - y)*squashingFactor;
+
+                if(density > 0)
                 {
-                    if(y >= height - 1)
-                    {
-                        m_blocks(x,y,z) = 0x01;
-                    }
-                    else
-                    {
-                        m_blocks(x,y,z) = 0x02;
-                    }
+                    m_blocks(x,y,z) = 0x02;
                 }
                 else
                 {
                     m_blocks(x,y,z) = 0x00;
                 }
+
+                // if(y < height)
+                // {
+                //     m_blocks(x,y,z) = 0x02;
+                // }
+                // else
+                // {
+                //     if(y < 25)
+                //     {
+                //         m_blocks(x,y,z) = 0x03;
+                //     }
+                //     else
+                //     {
+                //     m_blocks(x,y,z) = 0x00;
+                //     }
+                // }
+                
+                // float blockChance = 1.0f;
+                // if(y > yOffset - steepness)
+                // {
+                //     if( y > yOffset + steepness)
+                //     {
+                //         blockChance = 0.0f;
+                //     }
+                //     else
+                //     {
+                //         float t = (y - (yOffset - steepness)) / steepness;
+                //         //std::cout << "T = " << t << "\n";
+                //         blockChance = 1.0f - t;
+                //     }
+                // }
+
+                // float val = Settings::noise.noise3D_01((chunkX + x) * 0.01f, y * 0.01f, (chunkZ + z) * 0.01f);
+                
+                // if(val < blockChance)
+                // {
+                //     m_blocks(x,y,z) = 0x02;
+                // }
+                // else
+                // {
+                //     if(y < 36)
+                //     {
+                //         //m_blocks(x,y,z) = 0x03;
+                //     }
+                //     else
+                //     {
+                //         m_blocks(x,y,z) = 0x00;
+                //     }
+                // }
             }
         }
     }

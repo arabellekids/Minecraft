@@ -50,7 +50,7 @@ int main()
     // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     // SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
-    g_pWindow = SDL_CreateWindow("Minecraft Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 900, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
+    g_pWindow = SDL_CreateWindow("Minecraft Demo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_OPENGL);
     if (g_pWindow == nullptr)
     {
         return -1;
@@ -79,7 +79,7 @@ int main()
     mvp = glm::identity<glm::mat4>();
 
     // proj = glm::frustum(-2.0f, 2.0f, -1.5f, 1.5f, 1.0f, 100.0f);
-    int w = 1600, h = 900;
+    int w = 640, h = 480;
     float aspect = (float)w / (float)h;
     proj = glm::perspectiveLH(90.0f * 0.01745329251994329576923690768489f, aspect, 0.2f, 100.0f);
 
@@ -95,7 +95,7 @@ int main()
 
     bool running = true;
     float t = 1.0f;
-    float inc = -0.002f;
+    float inc = -0.001f;
 
     while (running)
     {
