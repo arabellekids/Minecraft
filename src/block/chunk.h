@@ -65,6 +65,8 @@ struct BlockFace
 class Chunk
 {
 private:
+    bool m_isLoading;
+
     glm::vec<2, long, glm::defaultp> m_pos;
 
     Vbo m_vb;
@@ -101,4 +103,7 @@ public:
     glm::vec<2, long, glm::defaultp>& GetPos() { return m_pos; }
 
     void Load(const glm::vec<2, long, glm::defaultp>& pos);
+
+    void SetLoading(bool loading) { m_isLoading = loading; }
+    bool GetLoading() const { return m_isLoading; }
 };

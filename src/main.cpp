@@ -81,7 +81,7 @@ int main()
     // proj = glm::frustum(-2.0f, 2.0f, -1.5f, 1.5f, 1.0f, 100.0f);
     int w = 640, h = 480;
     float aspect = (float)w / (float)h;
-    proj = glm::perspectiveLH(90.0f * 0.01745329251994329576923690768489f, aspect, 0.2f, 100.0f);
+    proj = glm::perspectiveLH(90.0f * 0.01745329251994329576923690768489f, aspect, 0.2f, 200.0f);
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);

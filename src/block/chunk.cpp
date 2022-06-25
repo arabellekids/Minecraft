@@ -24,6 +24,7 @@ Chunk::~Chunk() {}
 void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
 {
     m_pos = pos;
+    m_isLoading = false;
 
     long chunkX = pos.x * CHUNK_SIZE_X;
     long chunkZ = pos.y * CHUNK_SIZE_Z;

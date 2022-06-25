@@ -1,6 +1,6 @@
 #include "settings.h"
 
-unsigned int Settings::viewDist = 3;
+unsigned int Settings::viewDist = 7;
 bool Settings::wireframe = false;
 
 siv::BasicPerlinNoise<float> Settings::noise = siv::BasicPerlinNoise<float>(0);

@@ -50,17 +50,32 @@ public:
     T&       operator() (int x, int y)       { return m_grid[y*m_xSize + x]; }
 };
 
+class ChunkLoader
+{
+public:
+    ChunkLoader(long xPos, long zPos, int xChunk, int yChunk);
+
+    glm::vec<2, long, glm::defaultp> pos;
+    glm::vec2 chunkIndex;
+};
+
 class World : public BaseObject
 {
 private:
     Grid2D< std::unique_ptr<Chunk> > m_chunks;
+    std::vector<ChunkLoader*> m_loadingChunks;
+
     //std::vector<Chunk> m_renderChunks;
 
     Shader m_blockShader;
     Texture m_blockAtlasTex;
 
+    const int m_chunkLoadLimit = 1;
+
     void GenChunkBuffers(int x, int y, const glm::vec3& pPos);
     void ShiftGrid(BlockSide dir, Player& player);
+    void LoadChunks(Player& player);
+    void QueueChunk(long xPos, long zPos, int xChunk, int yChunk);
 public:
     World();
     ~World();
