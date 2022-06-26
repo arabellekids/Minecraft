@@ -118,6 +118,48 @@ int main()
         view = glm::inverse(p.GetModel());
         glm::mat4 vp = proj * view;
         
+        // break block
+        if(Input::Instance().GetMouseButton(MOUSE_LEFT))
+        {
+            glm::vec3 forward( view[0][2], view[1][2], view[2][2] );
+
+            glm::vec3 pos = p.GetPos();
+            for(int i = 0; i < 8; ++i)
+            {
+                if(world.GetBlock(pos.x, pos.y, pos.z) != BLOCK_AIR)
+                {
+                    world.SetBlock(p, pos.x, pos.y, pos.z, BLOCK_AIR);
+                    SDL_Delay(30);
+                    break;
+                }
+
+                pos += forward;
+            }
+        }
+        // build block
+        if(Input::Instance().GetMouseButton(MOUSE_RIGHT))
+        {
+            glm::vec3 forward( view[0][2], view[1][2], view[2][2] );
+
+            glm::vec3 pos = p.GetPos() + forward * 2.0f;
+            for(int i = 0; i < 7; ++i)
+            {
+                if(world.GetBlock(pos.x, pos.y, pos.z) != BLOCK_AIR)
+                {
+                    if(glm::dot(pos-p.GetPos(), pos-p.GetPos()) > 4.0f)
+                    {
+                        pos -= forward;
+                        world.SetBlock(p, pos.x, pos.y, pos.z, BLOCK_DIRT);
+                        SDL_Delay(20);
+                    }
+                    break;
+                }
+
+                pos += forward;
+            }
+        }
+        
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Draw the skybox

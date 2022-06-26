@@ -55,6 +55,4 @@ void Player::Update(const Player& player)
     if(m_rot.x >  89.0f) { m_rot.x =  89.0f; }
     
     m_rot.y += delta.x * 0.2f;
-
-    //CalcModel();
 }

@@ -9,10 +9,14 @@
 
 #include "../input/input.h"
 
+World* World::s_pInstance = nullptr;
+
 ChunkLoader::ChunkLoader(long xPos, long zPos, int xChunk, int yChunk) : pos(xPos, zPos), chunkIndex(xChunk, yChunk) {}
 
 World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", "assets/shaders/test/frag.glsl"), m_blockAtlasTex("assets/textures/Minecraft-atlas.png", GL_NEAREST)
 {
+    World::s_pInstance = this;
+    
     m_blockShader.SetUniform1i("u_tex", 0);
 
     m_chunks.Resize(Settings::viewDist * 2 + 1, Settings::viewDist * 2 + 1);
@@ -146,7 +150,7 @@ void World::LoadChunks(Player& player)
         GenChunkBuffers(chunkX, chunkY, player.GetPos());
 
         m_chunks(m_loadingChunks[i]->chunkIndex.x, m_loadingChunks[i]->chunkIndex.y)->SetLoading(false);
-        
+
         // Update the chunks 4 neighbors
         
         if(chunkX > 0 && !m_chunks(chunkX - 1, chunkY)->GetLoading()) { GenChunkBuffers(chunkX - 1, chunkY, player.GetPos()); }
@@ -267,4 +271,49 @@ void World::ShiftGrid(BlockSide dir, Player& player)
 
             break;
     }
+}
+
+unsigned char World::GetBlock(float x, float y, float z)
+{
+    int xBlock = x + m_chunks.GetXSize() * 0.5f * CHUNK_SIZE_X;
+    int yBlock = y;
+    int zBlock = z + m_chunks.GetYSize() * 0.5f * CHUNK_SIZE_Z;
+
+    int xChunk = xBlock / CHUNK_SIZE_X;
+    int yChunk = y / CHUNK_SIZE_Y;
+    int zChunk = zBlock / CHUNK_SIZE_Z;
+    
+    if(xChunk < 0 || yChunk < 0 || zChunk < 0 ||
+    xChunk >= m_chunks.GetXSize() || yChunk >= 1 || zChunk >= m_chunks.GetYSize())
+    {
+        return BLOCK_AIR;
+    }
+
+    return m_chunks(xChunk, zChunk)->Get(xBlock % CHUNK_SIZE_X, yBlock, zBlock % CHUNK_SIZE_Z);
+}
+
+void World::SetBlock(Player& player, float x, float y, float z, unsigned char block)
+{
+    int xBlock = x + m_chunks.GetXSize() * 0.5f * CHUNK_SIZE_X;
+    int yBlock = y;
+    int zBlock = z + m_chunks.GetYSize() * 0.5f * CHUNK_SIZE_Z;
+
+    int xChunk = xBlock / CHUNK_SIZE_X;
+    int yChunk = y / CHUNK_SIZE_Y;
+    int zChunk = zBlock / CHUNK_SIZE_Z;
+    
+    if(xChunk < 0 || yChunk < 0 || zChunk < 0 ||
+    xChunk >= m_chunks.GetXSize() || yChunk >= 1 || zChunk >= m_chunks.GetYSize())
+    {
+        return;
+    }
+
+    m_chunks(xChunk, zChunk)->Set(xBlock % CHUNK_SIZE_X, yBlock, zBlock % CHUNK_SIZE_Z, block);
+    GenChunkBuffers(xChunk, zChunk, player.GetPos());
+
+    // Regenerate neighbors
+    if(xChunk > 0) { GenChunkBuffers(xChunk - 1, yChunk, player.GetPos()); }
+    if((xChunk + 1) < m_chunks.GetXSize() ) { GenChunkBuffers(xChunk + 1, yChunk, player.GetPos()); }
+    if(yChunk > 0) { GenChunkBuffers(xChunk, yChunk - 1, player.GetPos()); }
+    if((yChunk + 1) < m_chunks.GetYSize()) { GenChunkBuffers(xChunk, yChunk + 1, player.GetPos()); }
 }

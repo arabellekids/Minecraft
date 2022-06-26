@@ -163,37 +163,37 @@ void Chunk::GenBlock(int x, int y, int z, unsigned char block, Chunk* n, Chunk* 
     // GenBlockFace(x,y,z, block, BLOCK_SIDE_BOTTOM);
     
     // Front
-    if(GetBlock(x, y, z + 1, n,s,e,w) == 0)
+    if(GetBlock(x, y, z + 1, n,s,e,w) == BLOCK_AIR)
     {
         GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_FRONT);
     }
 
     // Back
-    if(GetBlock(x, y, z - 1, n,s,e,w) == 0)
+    if(GetBlock(x, y, z - 1, n,s,e,w) == BLOCK_AIR)
     {
         GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_BACK);
     }
 
     // Left
-    if(GetBlock(x - 1, y, z, n,s,e,w) == 0)
+    if(GetBlock(x - 1, y, z, n,s,e,w) == BLOCK_AIR)
     {
         GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_LEFT);
     }
 
     // Right
-    if(GetBlock(x + 1, y, z, n,s,e,w) == 0)
+    if(GetBlock(x + 1, y, z, n,s,e,w) == BLOCK_AIR)
     {
         GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_RIGHT);
     }
 
     // Top
-    if(GetBlock(x, y + 1, z, n,s,e,w) == 0)
+    if(GetBlock(x, y + 1, z, n,s,e,w) == BLOCK_AIR)
     {
         GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_TOP);
     }
 
     // Bottom
-    if(GetBlock(x, y - 1, z, n,s,e,w) == 0)
+    if(GetBlock(x, y - 1, z, n,s,e,w) == BLOCK_AIR)
     {
         GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_BOTTOM);
     }

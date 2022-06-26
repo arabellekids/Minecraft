@@ -87,6 +87,9 @@ public:
     Chunk();
     ~Chunk();
 
+    unsigned char Get(int x, int y, int z) const { return m_blocks(x, y, z); }
+    void Set(int x, int y, int z, unsigned char block) { m_blocks(x, y, z) = block; }
+
     void GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w);
     void GenerateIndices(const glm::vec3& pPos);
 
