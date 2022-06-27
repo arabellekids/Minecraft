@@ -9,14 +9,10 @@
 
 #include "../input/input.h"
 
-World* World::s_pInstance = nullptr;
-
 ChunkLoader::ChunkLoader(long xPos, long zPos, int xChunk, int yChunk) : pos(xPos, zPos), chunkIndex(xChunk, yChunk) {}
 
 World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", "assets/shaders/test/frag.glsl"), m_blockAtlasTex("assets/textures/Minecraft-atlas.png", GL_NEAREST)
 {
-    World::s_pInstance = this;
-    
     m_blockShader.SetUniform1i("u_tex", 0);
 
     m_chunks.Resize(Settings::viewDist * 2 + 1, Settings::viewDist * 2 + 1);

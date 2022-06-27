@@ -62,8 +62,6 @@ public:
 class World : public BaseObject
 {
 private:
-    static World* s_pInstance;
-
     Grid2D< std::unique_ptr<Chunk> > m_chunks;
     std::vector<ChunkLoader*> m_loadingChunks;
 
@@ -81,8 +79,6 @@ private:
 public:
     World();
     ~World();
-
-    static World& Instance() { return *s_pInstance; }
 
     void Update(Player& player);
     void RenderSolid(const glm::mat4& vp);

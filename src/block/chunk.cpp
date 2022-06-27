@@ -23,7 +23,7 @@ Chunk::Chunk() : m_pos(0, 0), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMI
 
 Chunk::~Chunk() {}
 
-void Chunk::Load(const glm::vec<2, long, glm::defaultp>& pos)
+void Chunk::Load(const glm::i64vec2& pos)
 {
     m_pos = pos;
     
@@ -85,21 +85,62 @@ void Chunk::GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w)
     m_vb.GetData().clear();
     m_solidFaces.clear();
 
-    // +Y = up, +X = right, +Z = forward
-    for(auto z = 0; z < m_blocks.GetZSize(); ++z)
-    {
-        for(auto y = 0; y < m_blocks.GetYSize(); ++y)
-        {
-            for(auto x = 0; x < m_blocks.GetXSize(); ++x)
-            {
-                if(m_blocks(x,y,z) != 0)
-                {
-                    GenBlock(x,y,z, m_blocks(x,y,z), n,s,e,w);
-                }
-            }
-        }
-    }
+    std::array< glm::ivec3, 6> neighbors = {
+        glm::vec3( 0,  0,  1),
+        glm::vec3( 0,  0, -1),
+        glm::vec3(-1,  0,  0),
+        glm::vec3( 1,  0,  0),
+        glm::vec3( 0,  1,  0),
+        glm::vec3( 0, -1,  0)
+    };
 
+    // The vertices and face centers (used to create a BlockFace object for sorting) of a block mesh
+    const auto& blockVerts = GetBlockVertices();
+    const auto& blockFaces = GetBlockFaceCenters();
+
+    // +Y = up, +X = right, +Z = forward
+    for(int z = 0; z < CHUNK_SIZE_Z; ++z)
+    {
+        for(int y = 0; y < CHUNK_SIZE_Y; ++y)
+        {
+            for(int x = 0; x < CHUNK_SIZE_X; ++x)
+            {
+                if(m_blocks(x, y, z) == BLOCK_AIR) { continue; }
+                const BlockType& block = GetBlockType( m_blocks(x, y, z) );
+                
+                for(int side = 0; side < 6; ++side)
+                {
+                    const BlockType& neighbor = GetBlockType( GetBlock(
+                        x + neighbors[side].x,
+                        y + neighbors[side].y,
+                        z + neighbors[side].z,
+                        n,s,e,w
+                    ) );
+                    if(neighbor.isSolid) { continue; }
+
+                    float u = GetBlockFaceU(block, side);
+                    float v = GetBlockFaceV(block, side);
+
+                    // Add the block face, to mabye later be sorted
+                    unsigned int faceIndex = m_vb.GetData().size() >> 2;
+                    m_solidFaces.push_back( {faceIndex, blockFaces[side] } );
+
+                    // Add the 4 vertices of the quad
+                    for(int i = 0; i < 4; ++i)
+                    {
+                        m_vb.GetData().push_back( {
+                            blockVerts[side][i].x + x, blockVerts[side][i].y + y, blockVerts[side][i].z + z,
+                            blockVerts[side][i].u + u, blockVerts[side][i].v + v,
+                            blockVerts[side][i].light
+                        } );
+                    } // end loop i
+
+                } // end loop side
+            }  // end loop x
+        }  // end loop y
+    } // end loop z
+
+    // Update the OpenGL vertex buffer data
     m_vb.SetData(m_vb.GetData(), false);
 }
 
@@ -128,7 +169,7 @@ void Chunk::GenerateIndices(const glm::vec3& pPos)
 unsigned char Chunk::GetBlock(int x, int y, int z, Chunk* n, Chunk* s, Chunk* e, Chunk* w)
 {
     // Coord is not in y range of chunks
-    if(y < 0 || y >= CHUNK_SIZE_Y) { return 0; }
+    if(y < 0 || y >= CHUNK_SIZE_Y) { return BLOCK_AIR; }
     
     // Block is in this chunk
     if(x >= 0 && z >= 0 && x < CHUNK_SIZE_X && z < CHUNK_SIZE_Z) { return m_blocks(x, y, z); }
@@ -146,123 +187,5 @@ unsigned char Chunk::GetBlock(int x, int y, int z, Chunk* n, Chunk* s, Chunk* e,
     if(x < 0 && w != nullptr) { return w->m_blocks(CHUNK_SIZE_X - 1, y, z); }
     
     // Correct neighbor chunk has not been loaded, assume air
-    return 0;
-}
-
-void Chunk::GenBlock(int x, int y, int z, unsigned char block, Chunk* n, Chunk* s, Chunk* e, Chunk* w)
-{
-    float xPos = x * BS;
-    float yPos = y * BS;
-    float zPos = z * BS;
-    
-    // GenBlockFace(x,y,z, block, BLOCK_SIDE_FRONT);
-    // GenBlockFace(x,y,z, block, BLOCK_SIDE_BACK);
-    // GenBlockFace(x,y,z, block, BLOCK_SIDE_LEFT);
-    // GenBlockFace(x,y,z, block, BLOCK_SIDE_RIGHT);
-    // GenBlockFace(x,y,z, block, BLOCK_SIDE_TOP);
-    // GenBlockFace(x,y,z, block, BLOCK_SIDE_BOTTOM);
-    
-    // Front
-    if(GetBlock(x, y, z + 1, n,s,e,w) == BLOCK_AIR)
-    {
-        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_FRONT);
-    }
-
-    // Back
-    if(GetBlock(x, y, z - 1, n,s,e,w) == BLOCK_AIR)
-    {
-        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_BACK);
-    }
-
-    // Left
-    if(GetBlock(x - 1, y, z, n,s,e,w) == BLOCK_AIR)
-    {
-        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_LEFT);
-    }
-
-    // Right
-    if(GetBlock(x + 1, y, z, n,s,e,w) == BLOCK_AIR)
-    {
-        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_RIGHT);
-    }
-
-    // Top
-    if(GetBlock(x, y + 1, z, n,s,e,w) == BLOCK_AIR)
-    {
-        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_TOP);
-    }
-
-    // Bottom
-    if(GetBlock(x, y - 1, z, n,s,e,w) == BLOCK_AIR)
-    {
-        GenBlockFace(xPos,yPos,zPos, block, BLOCK_SIDE_BOTTOM);
-    }
-}
-
-void Chunk::GenBlockFace(float x, float y, float z, unsigned char block, BlockSide side)
-{
-    float u1 = GetPaletteBlock(block).GetU(side);
-    float v1 = GetPaletteBlock(block).GetV(side);
-
-    float u2 = u1 + 0.0624f;
-    float v2 = v1 + 0.0624f;
-
-    unsigned int index = m_vb.GetData().size() >> 2;
-
-    switch (side)
-    {
-        case BLOCK_SIDE_FRONT:
-            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u1,v1, 0.8f} );
-            m_vb.GetData().push_back( { x+BS, y,    z+BS, u1,v2, 0.8f} );
-            m_vb.GetData().push_back( { x,    y,    z+BS, u2,v2, 0.8f} );
-            m_vb.GetData().push_back( { x,    y+BS, z+BS, u2,v1, 0.8f} );
-
-            m_solidFaces.push_back( { index, {x+HALF_BS, y+HALF_BS, z+BS} } );
-            break;
-        
-        case BLOCK_SIDE_BACK:
-            m_vb.GetData().push_back( { x,    y+BS, z, u1,v1, 0.8f} );
-            m_vb.GetData().push_back( { x,    y,    z, u1,v2, 0.8f} );
-            m_vb.GetData().push_back( { x+BS, y,    z, u2,v2, 0.8f} );
-            m_vb.GetData().push_back( { x+BS, y+BS, z, u2,v1, 0.8f} );
-
-            m_solidFaces.push_back( { index, {x+HALF_BS, y+HALF_BS, z} } );
-            break;
-        
-        case BLOCK_SIDE_LEFT:
-            m_vb.GetData().push_back( { x, y+BS, z+BS, u1,v1, 0.9f} );
-            m_vb.GetData().push_back( { x, y,    z+BS, u1,v2, 0.9f} );
-            m_vb.GetData().push_back( { x, y,    z,    u2,v2, 0.9f} );
-            m_vb.GetData().push_back( { x, y+BS, z,    u2,v1, 0.9f} );
-
-            m_solidFaces.push_back( { index, {x, y+HALF_BS, z+HALF_BS} } );
-            break;
-        
-        case BLOCK_SIDE_RIGHT:
-            m_vb.GetData().push_back( { x+BS, y+BS, z,    u1,v1, 0.9f} );
-            m_vb.GetData().push_back( { x+BS, y,    z,    u1,v2, 0.9f} );
-            m_vb.GetData().push_back( { x+BS, y,    z+BS, u2,v2, 0.9f} );
-            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u2,v1, 0.9f} );
-
-            m_solidFaces.push_back( { index, {x+BS, y+HALF_BS, z+HALF_BS} } );
-            break;
-        
-        case BLOCK_SIDE_TOP:
-            m_vb.GetData().push_back( { x,    y+BS, z+BS, u1,v1, 1.0f} );
-            m_vb.GetData().push_back( { x,    y+BS, z,    u1,v2, 1.0f} );
-            m_vb.GetData().push_back( { x+BS, y+BS, z,    u2,v2, 1.0f} );
-            m_vb.GetData().push_back( { x+BS, y+BS, z+BS, u2,v1, 1.0f} );
-
-            m_solidFaces.push_back( { index, {x+HALF_BS, y+BS, z+HALF_BS} } );
-            break;
-        
-        case BLOCK_SIDE_BOTTOM:
-            m_vb.GetData().push_back( { x,    y, z,    u1,v1, 0.6f} );
-            m_vb.GetData().push_back( { x,    y, z+BS, u1,v2, 0.6f} );
-            m_vb.GetData().push_back( { x+BS, y, z+BS, u2,v2, 0.6f} );
-            m_vb.GetData().push_back( { x+BS, y, z,    u2,v1, 0.6f} );
-
-            m_solidFaces.push_back( { index, {x+HALF_BS, y, z+HALF_BS} } );
-            break;
-    }
+    return BLOCK_AIR;
 }

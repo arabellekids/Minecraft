@@ -67,7 +67,7 @@ class Chunk
 private:
     bool m_isLoading;
 
-    glm::vec<2, long, glm::defaultp> m_pos;
+    glm::i64vec2 m_pos;
 
     Vbo m_vb;
     Vao m_va;
@@ -102,10 +102,10 @@ public:
     const Ibo& GetSolidIb() const { return m_solidIB; }
     Ibo& GetSolidIb() { return m_solidIB; }
 
-    const glm::vec<2, long, glm::defaultp>& GetPos() const { return m_pos; }
-    glm::vec<2, long, glm::defaultp>& GetPos() { return m_pos; }
+    const glm::i64vec2& GetPos() const { return m_pos; }
+    glm::i64vec2& GetPos() { return m_pos; }
 
-    void Load(const glm::vec<2, long, glm::defaultp>& pos);
+    void Load(const glm::i64vec2& pos);
 
     void SetLoading(bool loading) { m_isLoading = loading; }
     bool GetLoading() const { return m_isLoading; }

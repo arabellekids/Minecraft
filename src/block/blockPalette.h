@@ -4,17 +4,7 @@
 #include <vector>
 #include <glm/vec3.hpp>
 
-#include "../vbo/vbo.h"
-
-enum BlockSide
-{
-    BLOCK_SIDE_FRONT  = 0,
-    BLOCK_SIDE_BACK   = 1,
-    BLOCK_SIDE_LEFT   = 2,
-    BLOCK_SIDE_RIGHT  = 3,
-    BLOCK_SIDE_TOP    = 4,
-    BLOCK_SIDE_BOTTOM = 5
-};
+#include "block.h"
 
 enum BlockID
 {
@@ -25,17 +15,15 @@ enum BlockID
     BLOCK_STONE = 0x04
 };
 
-class BlockType
+struct BlockType
 {
-private:
-    std::array<int, 6> m_textures;
-public:
-    BlockType(const std::array<int, 6>& textures);
-    ~BlockType();
+    std::array<int, 6> textures;
 
-    float GetU(BlockSide side) const;
-    float GetV(BlockSide side) const;
+    bool isSolid = true;
 };
 
 const std::vector<BlockType>& GetPalette();
-const BlockType& GetPaletteBlock(unsigned int index);
+const BlockType& GetBlockType(unsigned char block);
+
+float GetBlockFaceU(const BlockType& blockType, int side);
+float GetBlockFaceV(const BlockType& blockType, int side);

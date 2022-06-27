@@ -3,27 +3,23 @@
 #include "blockPalette.h"
 
 static std::vector<BlockType> g_palette = {
-    BlockType( { 1, 1, 1, 1, 0, 2 } ), // Grass
-    BlockType( { 2, 2, 2, 2, 2, 2 } ), // Dirt
-    BlockType( { 3, 3, 3, 3, 3, 3 } ), // Water
-    BlockType( { 4, 4, 4, 4, 4, 4 } ) // Stone
+    { { -1, -1, -1, -1, -1, -1 }, false }, // Air
+
+    { { 1, 1, 1, 1, 0, 2 }, true }, // Grass
+    { { 2, 2, 2, 2, 2, 2 }, true }, // Dirt
+    { { 3, 3, 3, 3, 3, 3 }, true }, // Water
+    { { 4, 4, 4, 4, 4, 4 }, true } // Stone
 };
 
 const std::vector<BlockType>& GetPalette() { return g_palette; }
-const BlockType& GetPaletteBlock(unsigned int index) { return g_palette[index - 1]; }
+const BlockType& GetBlockType(unsigned char block) { return g_palette[block]; }
 
-BlockType::BlockType(const std::array<int, 6>& textures)
+float GetBlockFaceU(const BlockType& blockType, int side)
 {
-    m_textures = textures;
-}
-BlockType::~BlockType() {}
-
-float BlockType::GetU(BlockSide side) const
-{
-    return (m_textures[side] % 16) * 0.0625f;
+    return (blockType.textures[side] % 16) * 0.0625f;
 }
 
-float BlockType::GetV(BlockSide side) const
+float GetBlockFaceV(const BlockType& blockType, int side)
 {
-    return (m_textures[side] >> 4) * 0.0625f;
+    return (blockType.textures[side] >> 4) * 0.0625f;
 }
