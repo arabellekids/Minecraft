@@ -142,17 +142,17 @@ void World::LoadChunks(Player& player)
         int chunkX = m_loadingChunks[i]->chunkIndex.x;
         int chunkY = m_loadingChunks[i]->chunkIndex.y;
         
+        m_chunks(chunkX, chunkY)->SetLoading(false);
+
         m_chunks(chunkX, chunkY)->Load(m_loadingChunks[i]->pos);
         GenChunkBuffers(chunkX, chunkY, player.GetPos());
 
-        m_chunks(m_loadingChunks[i]->chunkIndex.x, m_loadingChunks[i]->chunkIndex.y)->SetLoading(false);
-
         // Update the chunks 4 neighbors
         
-        if(chunkX > 0 && !m_chunks(chunkX - 1, chunkY)->GetLoading()) { GenChunkBuffers(chunkX - 1, chunkY, player.GetPos()); }
-        if((chunkX + 1) < m_chunks.GetXSize() && !m_chunks(chunkX + 1, chunkY)->GetLoading()) { GenChunkBuffers(chunkX + 1, chunkY, player.GetPos()); }
-        if(chunkY > 0 && !m_chunks(chunkX, chunkY - 1)->GetLoading()) { GenChunkBuffers(chunkX, chunkY - 1, player.GetPos()); }
-        if((chunkY + 1) < m_chunks.GetYSize() && !m_chunks(chunkX, chunkY + 1)->GetLoading()) { GenChunkBuffers(chunkX, chunkY + 1, player.GetPos()); }
+        if(IsValidChunk(chunkX - 1, chunkY)) { GenChunkBuffers(chunkX - 1, chunkY, player.GetPos()); }
+        if(IsValidChunk(chunkX + 1, chunkY)) { GenChunkBuffers(chunkX + 1, chunkY, player.GetPos()); }
+        if(IsValidChunk(chunkX, chunkY - 1)) { GenChunkBuffers(chunkX, chunkY - 1, player.GetPos()); }
+        if(IsValidChunk(chunkX, chunkY + 1)) { GenChunkBuffers(chunkX, chunkY + 1, player.GetPos()); }
         
         m_loadingChunks.pop_back();
     }
@@ -170,17 +170,22 @@ void World::GenChunkBuffers(int x, int y, const glm::vec3& pPos)
 {
     //if(x >= m_chunks.GetXSize() || y >= m_chunks.GetYSize() || x < 0 || y < 0) { return; }
     
-    Chunk* n = ((y + 1) < m_chunks.GetYSize() && m_chunks(x, y + 1)->GetLoading() == false) ? m_chunks(x, y + 1).get() : nullptr;
-    
-    Chunk* s = ((y - 1) >= 0 && m_chunks(x, y - 1)->GetLoading() == false) ? m_chunks(x, y - 1).get() : nullptr;
-    
-    Chunk* e = ((x + 1) < m_chunks.GetXSize() && m_chunks(x + 1, y)->GetLoading() == false) ? m_chunks(x + 1, y).get() : nullptr;
-    
-    Chunk* w =  ((x - 1) >= 0 && m_chunks(x - 1, y)->GetLoading() == false) ? m_chunks(x - 1, y).get() : nullptr;
+    Chunk* n = (IsValidChunk(x, y + 1)) ? m_chunks(x, y + 1).get() : nullptr;
+    Chunk* s = (IsValidChunk(x, y - 1)) ? m_chunks(x, y - 1).get() : nullptr;
+    Chunk* e = (IsValidChunk(x + 1, y)) ? m_chunks(x + 1, y).get() : nullptr;
+    Chunk* w =  (IsValidChunk(x - 1, y)) ? m_chunks(x - 1, y).get() : nullptr;
     
     m_chunks(x,y)->GenerateVertices(n,s,e,w);
     //m_chunks(x,y)->GenerateVertices(nullptr, nullptr, nullptr, nullptr);
     m_chunks(x,y)->GenerateIndices( pPos );
+}
+
+void World::GenNeighborChunkBuffers(int x, int y, const glm::vec3& pPos)
+{
+    if(IsValidChunk(x - 1, y)) { GenChunkBuffers(x - 1, y, pPos); }
+    if(IsValidChunk(x + 1, y)) { GenChunkBuffers(x + 1, y, pPos); }
+    if(IsValidChunk(x, y - 1)) { GenChunkBuffers(x, y - 1, pPos); }
+    if(IsValidChunk(x, y + 1)) { GenChunkBuffers(x, y + 1, pPos); }
 }
 
 void World::ShiftGrid(BlockSide dir, Player& player)
@@ -308,8 +313,10 @@ void World::SetBlock(Player& player, float x, float y, float z, unsigned char bl
     GenChunkBuffers(xChunk, zChunk, player.GetPos());
 
     // Regenerate neighbors
-    if(xChunk > 0) { GenChunkBuffers(xChunk - 1, yChunk, player.GetPos()); }
-    if((xChunk + 1) < m_chunks.GetXSize() ) { GenChunkBuffers(xChunk + 1, yChunk, player.GetPos()); }
-    if(yChunk > 0) { GenChunkBuffers(xChunk, yChunk - 1, player.GetPos()); }
-    if((yChunk + 1) < m_chunks.GetYSize()) { GenChunkBuffers(xChunk, yChunk + 1, player.GetPos()); }
+    GenNeighborChunkBuffers(xChunk, zChunk, player.GetPos());
+}
+
+bool World::IsValidChunk(int x, int y)
+{
+    return (x >= 0 && y >= 0 && x < m_chunks.GetXSize() && y < m_chunks.GetYSize() && !m_chunks(x,y)->GetLoading());
 }

@@ -73,9 +73,13 @@ private:
     const int m_chunkLoadLimit = 1;
 
     void GenChunkBuffers(int x, int y, const glm::vec3& pPos);
+    void GenNeighborChunkBuffers(int x, int y, const glm::vec3& pPos);
+    
     void ShiftGrid(BlockSide dir, Player& player);
     void LoadChunks(Player& player);
     void QueueChunk(long xPos, long zPos, int xChunk, int yChunk);
+
+    bool IsValidChunk(int x, int y);
 public:
     World();
     ~World();
