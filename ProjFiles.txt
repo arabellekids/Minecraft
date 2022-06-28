@@ -20,15 +20,15 @@ set(FILES
     src/app/app.cpp
     src/app/app.h
 
+    src/ray/ray.cpp
+    src/ray/ray.h
+
     # ------ Minecraft code ------
     src/settings/settings.cpp
     src/settings/settings.h
 
     src/input/input.cpp
     src/input/input.h
-
-    src/object/baseObject.cpp
-    src/object/baseObject.h
 
     src/object/gameObject.cpp
     src/object/gameObject.h

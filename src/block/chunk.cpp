@@ -187,3 +187,14 @@ unsigned char Chunk::GetBlock(int x, int y, int z, const World& world) const
 
     return world.GetBlock(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z);
 }
+
+void Chunk::SetBlock(int x, int y, int z, unsigned char block, World& world)
+{
+    if(x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE_X && y < CHUNK_SIZE_Y && z < CHUNK_SIZE_Z)
+    {
+        m_blocks(x,y,z) = block;
+        return;
+    }
+
+    world.SetBlock(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z, block);
+}

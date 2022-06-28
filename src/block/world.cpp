@@ -3,11 +3,15 @@
 
 #include <iostream>
 
+#include "../app/app.h"
 #include "../object/player.h"
+#include "../ray/ray.h"
 #include "../settings/settings.h"
 #include "world.h"
 
 #include "../input/input.h"
+
+#define abs(x) ((x) > 0) ? (x) : (-x)
 
 ChunkLoader::ChunkLoader(long xPos, long zPos, int xChunk, int yChunk) : pos(xPos, zPos), chunkIndex(xChunk, yChunk) {}
 
@@ -287,30 +291,121 @@ unsigned char World::GetBlock(int x, int y, int z) const
     return m_chunks(xChunk, yChunk)->GetBlock(x % CHUNK_SIZE_X, y, z % CHUNK_SIZE_Z, *this);
 }
 
-void World::SetBlock(Player& player, float x, float y, float z, unsigned char block)
+void World::SetBlock(int x, int y, int z, unsigned char block)
 {
-    int xBlock = x + m_chunks.GetXSize() * 0.5f * CHUNK_SIZE_X;
-    int yBlock = y;
-    int zBlock = z + m_chunks.GetYSize() * 0.5f * CHUNK_SIZE_Z;
-
-    int xChunk = xBlock / CHUNK_SIZE_X;
-    int yChunk = y / CHUNK_SIZE_Y;
-    int zChunk = zBlock / CHUNK_SIZE_Z;
-    
-    if(xChunk < 0 || yChunk < 0 || zChunk < 0 ||
-    xChunk >= m_chunks.GetXSize() || yChunk >= 1 || zChunk >= m_chunks.GetYSize())
+    if(x < 0 || y < 0 || z < 0 ||
+    x >= m_chunks.GetXSize() * CHUNK_SIZE_X || y >= CHUNK_SIZE_Y || z >= m_chunks.GetYSize() * CHUNK_SIZE_Z)
     {
         return;
     }
 
-    m_chunks(xChunk, zChunk)->Set(xBlock % CHUNK_SIZE_X, yBlock, zBlock % CHUNK_SIZE_Z, block);
-    GenChunkBuffers(xChunk, zChunk, player.GetPos());
+    int xChunk = x / CHUNK_SIZE_X;
+    int yChunk = z / CHUNK_SIZE_Z;
+
+    m_chunks(xChunk, yChunk)->SetBlock(x % CHUNK_SIZE_X, y, z % CHUNK_SIZE_Z, block, *this);
+
+    GenChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
 
     // Regenerate neighbors
-    GenNeighborChunkBuffers(xChunk, zChunk, player.GetPos());
+    GenNeighborChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
 }
 
 bool World::IsValidChunk(int x, int y)
 {
     return (x >= 0 && y >= 0 && x < m_chunks.GetXSize() && y < m_chunks.GetYSize() && !m_chunks(x,y)->GetLoading());
+}
+
+bool World::Raycast(const Ray& ray, BlockHitInfo& info, bool ignoreNear)
+{
+    glm::vec3 inc = ray.GetDirection() * 0.5f;
+    
+    glm::vec3 startPos = ray.GetOrigin();
+    glm::ivec3 blockPos = startPos;
+
+    glm::vec3 cur(startPos.x - (int)startPos.x - 0.5f,
+    startPos.y - (int)startPos.y - 0.5f,
+    startPos.z - (int)startPos.z - 0.5f);
+    
+    int length = ray.GetLength();
+    float absX = 0.0f;
+    float absY = 0.0f;
+    float absZ = 0.0f;
+
+    for(int i = 0; i < length; ++i)
+    {
+        absX = abs(cur.x);
+        absY = abs(cur.y);
+        absZ = abs(cur.z);
+        
+        while(absX > 0.5f || absY > 0.5f || absZ > 0.5f)
+        {
+            absX = abs(cur.x);
+            absY = abs(cur.y);
+            absZ = abs(cur.z);
+            
+            // Front
+            if(absZ >= absX && absZ >= absY && cur.z > 0.5f)
+            {
+                blockPos.z++;
+                cur.z -= 1.0f;
+                info.side = BLOCK_SIDE_BACK;
+            }
+            // Back
+            else if(absZ >= absX && absZ >= absY && cur.z < 0.5f)
+            {
+                blockPos.z--;
+                cur.z += 1.0f;
+                info.side = BLOCK_SIDE_FRONT;
+                
+            }
+            
+            // Right
+            else if(absX >= absY && absX >= absZ && cur.x > 0.5f)
+            {
+                blockPos.x++;
+                cur.x -= 1.0f;
+                info.side = BLOCK_SIDE_LEFT;
+                
+            }
+            // Left
+            else if(absX >= absY && absX >= absZ && cur.x < 0.5f)
+            {
+                blockPos.x--;
+                cur.x += 1.0f;
+                info.side = BLOCK_SIDE_RIGHT;    
+            }
+
+            // Up
+            else if(absY >= absX && absY >= absZ && cur.y > 0.5f)
+            {
+                blockPos.y++;
+                cur.y -= 1.0f;
+                info.side = BLOCK_SIDE_BOTTOM;
+                
+            }
+            // Down
+            else if(absY >= absX && absY >= absZ && cur.y < 0.5f)
+            {
+                blockPos.y--;
+                cur.y += 1.0f;
+                info.side = BLOCK_SIDE_TOP;
+            }
+
+            auto block = GetBlock(blockPos.x, blockPos.y, blockPos.z);
+            if(block == BLOCK_AIR) { continue; }
+            
+            // Too close
+            glm::vec3 toBlock(blockPos.x - startPos.x, blockPos.y - startPos.y, blockPos.z - startPos.z);
+            if(glm::dot(toBlock, toBlock) <= 3 && ignoreNear) { return false; }
+
+            info.block = block;
+            info.pos = blockPos;
+
+            return true;
+        }
+
+        cur += inc;
+    }
+
+    return false;
 }

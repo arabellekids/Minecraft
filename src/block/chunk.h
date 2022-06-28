@@ -89,7 +89,7 @@ public:
     ~Chunk();
 
     unsigned char GetBlock(int x, int y, int z, const World& world) const;
-    void Set(int x, int y, int z, unsigned char block) { m_blocks(x, y, z) = block; }
+    void SetBlock(int x, int y, int z, unsigned char block, World& world);
 
     void GenerateVertices(const World& world);
     void GenerateIndices(const glm::vec3& pPos);

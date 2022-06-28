@@ -9,6 +9,7 @@
 #include "chunk.h"
 
 class Player;
+class Ray;
 
 template<typename T>
 class Grid2D
@@ -59,6 +60,13 @@ public:
     glm::vec2 chunkIndex;
 };
 
+struct BlockHitInfo
+{
+    glm::ivec3 pos;
+    BlockSide side;
+    unsigned char block;
+};
+
 class World
 {
 private:
@@ -89,6 +97,8 @@ public:
     void Update(Player& player);
     void RenderSolid(const glm::mat4& vp);
 
+    bool Raycast(const Ray& ray, BlockHitInfo& info, bool ignoreNear = true);
+
     unsigned char GetBlock(int x, int y, int z) const;
-    void SetBlock(Player& player, float x, float y, float z, unsigned char block);
+    void SetBlock(int x, int y, int z, unsigned char block);
 };

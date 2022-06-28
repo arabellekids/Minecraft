@@ -10,5 +10,5 @@ class Player : public GameObject
 public:
     void Update();
     void OnKeyDown(SDL_Scancode key);
-    void OnKeyUp(SDL_Scancode key);
+    void OnMouseButtonUp(Uint8 button);
 };

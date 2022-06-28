@@ -6,8 +6,12 @@
 #include "app.h"
 #include "../settings/settings.h"
 
+App* App::s_pInstance = nullptr;
+
 App::App(int w, int h, bool fullscreen) : m_bRunning(false), m_pWindow(nullptr), m_pGlCtx(nullptr)
 {
+    s_pInstance = this;
+    
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) { return; }
 
     m_pWindow = (fullscreen) ? SDL_CreateWindow("Minecraft Demo", 0,0, w,h, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN)
@@ -74,13 +78,11 @@ void App::HandleEvents()
                     Settings::wireframe = !Settings::wireframe;
                 }
 
-                // Update player
-                else
-                {
-                    m_player->OnKeyUp(event.key.keysym.scancode);
-                }
-
                 break;
+            case SDL_MOUSEBUTTONUP:
+                m_player->OnMouseButtonUp(event.button.button);
+                break;
+            
         }
     }
 }

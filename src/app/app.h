@@ -15,6 +15,8 @@ struct SDL_Window;
 class App
 {
 private:
+    static App* s_pInstance;
+
     bool m_bRunning;
 
     SDL_Window* m_pWindow;
@@ -32,7 +34,15 @@ public:
     App(int w, int h, bool fullscreen = false);
     ~App();
 
+    static App& Instance() { return *s_pInstance; }
+
     void Run();
 
     bool IsRunning() const { return m_bRunning; }
+
+    const World& GetWorld() const { return *m_world; }
+    World& GetWorld() { return *m_world; }
+    
+    const Player& GetPlayer() const { return *m_player; }
+    Player& GetPlayer() { return *m_player; }
 };
