@@ -22,6 +22,18 @@ Chunk::Chunk() : m_pos(0, 0), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMI
     m_va.AddBuffer(m_vb, layout);
 }
 
+Chunk::Chunk(const glm::ivec2& pos) : m_pos(pos), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
+{
+    m_isLoading = false;
+    
+    BufferLayout layout;
+    layout.Push<float>(3); // x,y,z
+    layout.Push<float>(2); // u,v
+    layout.Push<float>(1); // light
+    
+    m_va.AddBuffer(m_vb, layout);
+}
+
 Chunk::~Chunk() {}
 
 void Chunk::Load(const glm::i64vec2& pos)
@@ -80,7 +92,7 @@ void Chunk::Load(const glm::i64vec2& pos)
     }
 }
 
-void Chunk::GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w, const World& world)
+void Chunk::GenerateVertices(const World& world)
 {
     m_vb.GetData().clear();
     m_solidFaces.clear();
@@ -110,13 +122,7 @@ void Chunk::GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w, const World
                 
                 for(int side = 0; side < 6; ++side)
                 {
-                    // const BlockType& neighbor = GetBlockType( GetBlock(
-                    //     x + neighbors[side].x,
-                    //     y + neighbors[side].y,
-                    //     z + neighbors[side].z,
-                    //     n,s,e,w
-                    // ) );
-                    const BlockType& neighbor = GetBlockType( Get(
+                    const BlockType& neighbor = GetBlockType( GetBlock(
                         x + neighbors[side].x,
                         y + neighbors[side].y,
                         z + neighbors[side].z,
@@ -172,36 +178,12 @@ void Chunk::GenerateIndices(const glm::vec3& pPos)
     m_solidIB.SetData(m_solidIB.GetData(), false);
 }
 
-unsigned char Chunk::Get(int x, int y, int z, const World& world) const
+unsigned char Chunk::GetBlock(int x, int y, int z, const World& world) const
 {
-    if(y < 0 || y >= CHUNK_SIZE_Y) { return BLOCK_AIR; }
-    if(x >= 0 && z >= 0 && x < CHUNK_SIZE_X && z < CHUNK_SIZE_Z)
+    if(x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE_X && y < CHUNK_SIZE_Y && z < CHUNK_SIZE_Z)
     {
         return m_blocks(x,y,z);
     }
+
     return world.GetBlock(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z);
-}
-
-unsigned char Chunk::GetBlock(int x, int y, int z, Chunk* n, Chunk* s, Chunk* e, Chunk* w)
-{
-    // Coord is not in y range of chunks
-    if(y < 0 || y >= CHUNK_SIZE_Y) { return BLOCK_AIR; }
-    
-    // Block is in this chunk
-    if(x >= 0 && z >= 0 && x < CHUNK_SIZE_X && z < CHUNK_SIZE_Z) { return m_blocks(x, y, z); }
-
-    // Block is in north chunk
-    if(z >= CHUNK_SIZE_Z && n != nullptr) { return n->m_blocks(x,y, 0); }
-    
-    // Block is in south chunk
-    if(z < 0 && s != nullptr) { return s->m_blocks(x,y, CHUNK_SIZE_Z - 1); }
-
-    // Block is in east chunk
-    if(x >= CHUNK_SIZE_X && e != nullptr) { return e->m_blocks(0, y, z); }
-
-    // Block is in west chunk
-    if(x < 0 && w != nullptr) { return w->m_blocks(CHUNK_SIZE_X - 1, y, z); }
-    
-    // Correct neighbor chunk has not been loaded, assume air
-    return BLOCK_AIR;
 }

@@ -89,7 +89,6 @@ public:
     void Update(Player& player);
     void RenderSolid(const glm::mat4& vp);
 
-    unsigned char GetBlock(float x, float y, float z) const;
+    unsigned char GetBlock(int x, int y, int z) const;
     void SetBlock(Player& player, float x, float y, float z, unsigned char block);
-    //unsigned char GetBlock() const;
 };

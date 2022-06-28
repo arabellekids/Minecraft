@@ -80,19 +80,18 @@ private:
 
     Grid3D<unsigned char> m_blocks;
 
-    unsigned char GetBlock(int x, int y, int z, Chunk* n, Chunk* s, Chunk* e, Chunk* w);
-
     void GenBlockFace(float x, float y, float z, unsigned char block, BlockSide side);
     void GenBlock(int x, int y, int z, unsigned char block, Chunk* n, Chunk* s, Chunk* e, Chunk* w);
     void SortFaces(const glm::vec3& pPos);
 public:
     Chunk();
+    Chunk(const glm::ivec2& pos);
     ~Chunk();
 
-    unsigned char Get(int x, int y, int z, const World& world) const;
+    unsigned char GetBlock(int x, int y, int z, const World& world) const;
     void Set(int x, int y, int z, unsigned char block) { m_blocks(x, y, z) = block; }
 
-    void GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w, const World& world);
+    void GenerateVertices(const World& world);
     void GenerateIndices(const glm::vec3& pPos);
 
     const Vao& GetVa() const { return m_va; }
@@ -106,8 +105,6 @@ public:
 
     const glm::ivec2& GetPos() const { return m_pos; }
     glm::ivec2& GetPos() { return m_pos; }
-
-    void SetPos(const glm::ivec2& pos) { m_pos = pos; }
 
     void Load(const glm::i64vec2& pos);
 

@@ -26,8 +26,7 @@ World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", 
     {
         for(auto x = 0; x < m_chunks.GetXSize(); ++x)
         {
-            m_chunks(x,y) = std::make_unique<Chunk>();
-            m_chunks(x,y)->SetPos( {x,y} );
+            m_chunks(x,y) = std::make_unique<Chunk>( glm::ivec2(x,y) );
             m_chunks(x,y)->Load( { x,y } );
         }
     }
@@ -172,15 +171,7 @@ void World::QueueChunk(long xPos, long zPos, int xChunk, int yChunk)
 
 void World::GenChunkBuffers(int x, int y, const glm::vec3& pPos)
 {
-    //if(x >= m_chunks.GetXSize() || y >= m_chunks.GetYSize() || x < 0 || y < 0) { return; }
-    
-    Chunk* n = (IsValidChunk(x, y + 1)) ? m_chunks(x, y + 1).get() : nullptr;
-    Chunk* s = (IsValidChunk(x, y - 1)) ? m_chunks(x, y - 1).get() : nullptr;
-    Chunk* e = (IsValidChunk(x + 1, y)) ? m_chunks(x + 1, y).get() : nullptr;
-    Chunk* w =  (IsValidChunk(x - 1, y)) ? m_chunks(x - 1, y).get() : nullptr;
-    
-    m_chunks(x,y)->GenerateVertices(n,s,e,w, *this);
-    //m_chunks(x,y)->GenerateVertices(nullptr, nullptr, nullptr, nullptr);
+    m_chunks(x,y)->GenerateVertices(*this);
     m_chunks(x,y)->GenerateIndices( pPos );
 }
 
@@ -205,13 +196,13 @@ void World::ShiftGrid(BlockSide dir, Player& player)
                 for(int x = 0; x < m_chunks.GetXSize(); ++x)
                 {
                     std::swap(m_chunks(x, z), m_chunks(x, z + 1));
-                    m_chunks(x,z)->GetPos().y -= 1;
+                    m_chunks(x,z)->GetPos().y -= 1; // Make sure the chunk's pos stays the same
                 }
             }
 
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().y += m_chunks.GetYSize() - 1;
+                m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().y += m_chunks.GetYSize() - 1; // Make sure the chunk's pos stays the same
                 QueueChunk(m_offset.x, m_offset.y, x, m_chunks.GetYSize() - 1);
             }
 
@@ -226,13 +217,13 @@ void World::ShiftGrid(BlockSide dir, Player& player)
                 for(int x = 0; x < m_chunks.GetXSize(); ++x)
                 {
                     std::swap(m_chunks(x, z), m_chunks(x, z - 1));
-                    m_chunks(x,z)->GetPos().y += 1;
+                    m_chunks(x,z)->GetPos().y += 1; // Make sure the chunk's pos stays the same
                 }
             }
             
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                m_chunks(x, 0)->GetPos().y -= m_chunks.GetYSize() - 1;
+                m_chunks(x, 0)->GetPos().y -= m_chunks.GetYSize() - 1; // Make sure the chunk's pos stays the same
                 QueueChunk(m_offset.x, m_offset.y, x, 0);
             }
 
@@ -247,13 +238,13 @@ void World::ShiftGrid(BlockSide dir, Player& player)
                 for(int z = 0; z < m_chunks.GetYSize(); ++z)
                 {
                     std::swap(m_chunks(x, z), m_chunks(x - 1, z));
-                    m_chunks(x,z)->GetPos().x += 1;
+                    m_chunks(x,z)->GetPos().x += 1; // Make sure the chunk's pos stays the same
                 }
             }
 
             for(int z = 0; z < m_chunks.GetYSize(); ++z)
             {
-                m_chunks(0, z)->GetPos().x -= m_chunks.GetXSize() - 1;
+                m_chunks(0, z)->GetPos().x -= m_chunks.GetXSize() - 1; // Make sure the chunk's pos stays the same
                 QueueChunk(m_offset.x, m_offset.y, 0, z);
             }
 
@@ -268,13 +259,13 @@ void World::ShiftGrid(BlockSide dir, Player& player)
                 for(int z = 0; z < m_chunks.GetYSize(); ++z)
                 {
                     std::swap(m_chunks(x, z), m_chunks(x + 1, z));
-                    m_chunks(x,z)->GetPos().x -= 1;
+                    m_chunks(x,z)->GetPos().x -= 1; // Make sure the chunk's pos stays the same
                 }
             }
 
             for(int z = 0; z < m_chunks.GetYSize(); ++z)
             {
-                m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().x += m_chunks.GetXSize() - 1;
+                m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().x += m_chunks.GetXSize() - 1; // Make sure the chunk's pos stays the same
                 QueueChunk(m_offset.x, m_offset.y, m_chunks.GetXSize() - 1, z);
             }
 
@@ -282,7 +273,7 @@ void World::ShiftGrid(BlockSide dir, Player& player)
     }
 }
 
-unsigned char World::GetBlock(float x, float y, float z) const
+unsigned char World::GetBlock(int x, int y, int z) const
 {
     if(x < 0 || y < 0 || z < 0 ||
     x >= m_chunks.GetXSize() * CHUNK_SIZE_X || y >= CHUNK_SIZE_Y || z >= m_chunks.GetYSize() * CHUNK_SIZE_Z)
@@ -293,7 +284,7 @@ unsigned char World::GetBlock(float x, float y, float z) const
     int xChunk = x / CHUNK_SIZE_X;
     int yChunk = z / CHUNK_SIZE_Z;
 
-    return m_chunks(xChunk, yChunk)->Get((int)x % CHUNK_SIZE_X, y, (int)z % CHUNK_SIZE_Z, *this);
+    return m_chunks(xChunk, yChunk)->GetBlock(x % CHUNK_SIZE_X, y, z % CHUNK_SIZE_Z, *this);
 }
 
 void World::SetBlock(Player& player, float x, float y, float z, unsigned char block)

@@ -106,9 +106,6 @@ int main()
     float t = 1.0f;
     float inc = -0.001f;
 
-    auto lastT = GetTime();
-    int frames = 0;
-
     while (running)
     {
         if (SDL_QuitRequested() | Input::Instance().GetKey(SDL_SCANCODE_ESCAPE))
@@ -130,46 +127,46 @@ int main()
         view = glm::inverse(p.GetModel());
         glm::mat4 vp = proj * view;
         
-        // break block
-        if(Input::Instance().GetMouseButton(MOUSE_LEFT))
-        {
-            glm::vec3 forward( view[0][2], view[1][2], view[2][2] );
+        // // break block
+        // if(Input::Instance().GetMouseButton(MOUSE_LEFT))
+        // {
+        //     glm::vec3 forward( view[0][2], view[1][2], view[2][2] );
 
-            glm::vec3 pos = p.GetPos();
-            for(int i = 0; i < 8; ++i)
-            {
-                if(world.GetBlock(pos.x, pos.y, pos.z) != BLOCK_AIR)
-                {
-                    world.SetBlock(p, pos.x, pos.y, pos.z, BLOCK_AIR);
-                    SDL_Delay(30);
-                    break;
-                }
+        //     glm::vec3 pos = p.GetPos();
+        //     for(int i = 0; i < 8; ++i)
+        //     {
+        //         if(world.GetBlock(pos.x, pos.y, pos.z) != BLOCK_AIR)
+        //         {
+        //             world.SetBlock(p, pos.x, pos.y, pos.z, BLOCK_AIR);
+        //             SDL_Delay(30);
+        //             break;
+        //         }
 
-                pos += forward;
-            }
-        }
-        // build block
-        if(Input::Instance().GetMouseButton(MOUSE_RIGHT))
-        {
-            glm::vec3 forward( view[0][2], view[1][2], view[2][2] );
+        //         pos += forward;
+        //     }
+        // }
+        // // build block
+        // if(Input::Instance().GetMouseButton(MOUSE_RIGHT))
+        // {
+        //     glm::vec3 forward( view[0][2], view[1][2], view[2][2] );
 
-            glm::vec3 pos = p.GetPos() + forward * 2.0f;
-            for(int i = 0; i < 7; ++i)
-            {
-                if(world.GetBlock(pos.x, pos.y, pos.z) != BLOCK_AIR)
-                {
-                    if(glm::dot(pos-p.GetPos(), pos-p.GetPos()) > 4.0f)
-                    {
-                        pos -= forward;
-                        world.SetBlock(p, pos.x, pos.y, pos.z, BLOCK_DIRT);
-                        SDL_Delay(20);
-                    }
-                    break;
-                }
+        //     glm::vec3 pos = p.GetPos() + forward * 2.0f;
+        //     for(int i = 0; i < 7; ++i)
+        //     {
+        //         if(world.GetBlock(pos.x, pos.y, pos.z) != BLOCK_AIR)
+        //         {
+        //             if(glm::dot(pos-p.GetPos(), pos-p.GetPos()) > 4.0f)
+        //             {
+        //                 pos -= forward;
+        //                 world.SetBlock(p, pos.x, pos.y, pos.z, BLOCK_DIRT);
+        //                 SDL_Delay(20);
+        //             }
+        //             break;
+        //         }
 
-                pos += forward;
-            }
-        }
+        //         pos += forward;
+        //     }
+        // }
         
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -186,15 +183,7 @@ int main()
         }
 
         world.RenderSolid(vp);
-        frames++;
-
-        if(GetTime() >= lastT + 1)
-        {
-            float delta = (1.0 / frames) * 1000;
-            std::cout << "Ms = " << delta << "\n";
-            lastT = GetTime();
-        }
-
+        
         SDL_GL_SwapWindow(g_pWindow);
     }
 
