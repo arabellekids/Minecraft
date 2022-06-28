@@ -7,6 +7,8 @@
 
 #include <iostream>
 
+#include <time.h>
+
 #include "block/chunk.h"
 #include "block/world.h"
 #include "object/player.h"
@@ -38,6 +40,13 @@ void GLErrorCallback(GLenum src, GLenum type, GLuint id,
 
     std::cout << "\nMsg = [\n"
               << msg << "\n]\n";
+}
+
+double GetTime()
+{
+    timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return t.tv_sec + t.tv_nsec * 0.000000001;
 }
 
 int main()
@@ -96,6 +105,9 @@ int main()
     bool running = true;
     float t = 1.0f;
     float inc = -0.001f;
+
+    auto lastT = GetTime();
+    int frames = 0;
 
     while (running)
     {
@@ -174,7 +186,15 @@ int main()
         }
 
         world.RenderSolid(vp);
-        
+        frames++;
+
+        if(GetTime() >= lastT + 1)
+        {
+            float delta = (1.0 / frames) * 1000;
+            std::cout << "Ms = " << delta << "\n";
+            lastT = GetTime();
+        }
+
         SDL_GL_SwapWindow(g_pWindow);
     }
 

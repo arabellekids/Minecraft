@@ -4,6 +4,7 @@
 
 #include "chunk.h"
 #include "../settings/settings.h"
+#include "world.h"
 
 #define max(x,y) (x > y) ? (x) : (y)
 #define min(x,y) (x < y) ? (x) : (y)
@@ -25,10 +26,9 @@ Chunk::~Chunk() {}
 
 void Chunk::Load(const glm::i64vec2& pos)
 {
-    m_pos = pos;
-    
-    long chunkX = pos.x * CHUNK_SIZE_X;
-    long chunkZ = pos.y * CHUNK_SIZE_Z;
+    //std::cout << "m_pos = { x = " << m_pos.x << ", y = " << m_pos.y << " }\n";
+    long chunkX = (m_pos.x + pos.x) * CHUNK_SIZE_X;
+    long chunkZ = (m_pos.y + pos.y) * CHUNK_SIZE_Z;
 
     for(int z = 0; z < CHUNK_SIZE_Z; ++z)
     {
@@ -80,7 +80,7 @@ void Chunk::Load(const glm::i64vec2& pos)
     }
 }
 
-void Chunk::GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w)
+void Chunk::GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w, const World& world)
 {
     m_vb.GetData().clear();
     m_solidFaces.clear();
@@ -110,11 +110,17 @@ void Chunk::GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w)
                 
                 for(int side = 0; side < 6; ++side)
                 {
-                    const BlockType& neighbor = GetBlockType( GetBlock(
+                    // const BlockType& neighbor = GetBlockType( GetBlock(
+                    //     x + neighbors[side].x,
+                    //     y + neighbors[side].y,
+                    //     z + neighbors[side].z,
+                    //     n,s,e,w
+                    // ) );
+                    const BlockType& neighbor = GetBlockType( Get(
                         x + neighbors[side].x,
                         y + neighbors[side].y,
                         z + neighbors[side].z,
-                        n,s,e,w
+                        world
                     ) );
                     if(neighbor.isSolid) { continue; }
 
@@ -164,6 +170,16 @@ void Chunk::GenerateIndices(const glm::vec3& pPos)
     }
 
     m_solidIB.SetData(m_solidIB.GetData(), false);
+}
+
+unsigned char Chunk::Get(int x, int y, int z, const World& world) const
+{
+    if(y < 0 || y >= CHUNK_SIZE_Y) { return BLOCK_AIR; }
+    if(x >= 0 && z >= 0 && x < CHUNK_SIZE_X && z < CHUNK_SIZE_Z)
+    {
+        return m_blocks(x,y,z);
+    }
+    return world.GetBlock(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z);
 }
 
 unsigned char Chunk::GetBlock(int x, int y, int z, Chunk* n, Chunk* s, Chunk* e, Chunk* w)

@@ -14,6 +14,8 @@ const int CHUNK_SIZE_X = 16;
 const int CHUNK_SIZE_Y = 128;
 const int CHUNK_SIZE_Z = 16;
 
+class World;
+
 template<typename T>
 class Grid3D
 {
@@ -67,7 +69,7 @@ class Chunk
 private:
     bool m_isLoading;
 
-    glm::i64vec2 m_pos;
+    glm::ivec2 m_pos;
 
     Vbo m_vb;
     Vao m_va;
@@ -87,10 +89,10 @@ public:
     Chunk();
     ~Chunk();
 
-    unsigned char Get(int x, int y, int z) const { return m_blocks(x, y, z); }
+    unsigned char Get(int x, int y, int z, const World& world) const;
     void Set(int x, int y, int z, unsigned char block) { m_blocks(x, y, z) = block; }
 
-    void GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w);
+    void GenerateVertices(Chunk* n, Chunk* s, Chunk* e, Chunk* w, const World& world);
     void GenerateIndices(const glm::vec3& pPos);
 
     const Vao& GetVa() const { return m_va; }
@@ -102,8 +104,10 @@ public:
     const Ibo& GetSolidIb() const { return m_solidIB; }
     Ibo& GetSolidIb() { return m_solidIB; }
 
-    const glm::i64vec2& GetPos() const { return m_pos; }
-    glm::i64vec2& GetPos() { return m_pos; }
+    const glm::ivec2& GetPos() const { return m_pos; }
+    glm::ivec2& GetPos() { return m_pos; }
+
+    void SetPos(const glm::ivec2& pos) { m_pos = pos; }
 
     void Load(const glm::i64vec2& pos);
 

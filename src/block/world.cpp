@@ -13,6 +13,9 @@ ChunkLoader::ChunkLoader(long xPos, long zPos, int xChunk, int yChunk) : pos(xPo
 
 World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", "assets/shaders/test/frag.glsl"), m_blockAtlasTex("assets/textures/Minecraft-atlas.png", GL_NEAREST)
 {
+    m_offset.x = 0;
+    m_offset.y = 0;
+    
     m_blockShader.SetUniform1i("u_tex", 0);
 
     m_chunks.Resize(Settings::viewDist * 2 + 1, Settings::viewDist * 2 + 1);
@@ -24,7 +27,8 @@ World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", 
         for(auto x = 0; x < m_chunks.GetXSize(); ++x)
         {
             m_chunks(x,y) = std::make_unique<Chunk>();
-            m_chunks(x,y)->Load( { x, y } );
+            m_chunks(x,y)->SetPos( {x,y} );
+            m_chunks(x,y)->Load( { x,y } );
         }
     }
 
@@ -175,7 +179,7 @@ void World::GenChunkBuffers(int x, int y, const glm::vec3& pPos)
     Chunk* e = (IsValidChunk(x + 1, y)) ? m_chunks(x + 1, y).get() : nullptr;
     Chunk* w =  (IsValidChunk(x - 1, y)) ? m_chunks(x - 1, y).get() : nullptr;
     
-    m_chunks(x,y)->GenerateVertices(n,s,e,w);
+    m_chunks(x,y)->GenerateVertices(n,s,e,w, *this);
     //m_chunks(x,y)->GenerateVertices(nullptr, nullptr, nullptr, nullptr);
     m_chunks(x,y)->GenerateIndices( pPos );
 }
@@ -194,103 +198,102 @@ void World::ShiftGrid(BlockSide dir, Player& player)
     {
         case BLOCK_SIDE_FRONT:
             player.GetPos().z -= (CHUNK_SIZE_Z * BS);
+            m_offset.y += 1;
 
             for(int z = 0; z < m_chunks.GetYSize() - 1; ++z)
             {
                 for(int x = 0; x < m_chunks.GetXSize(); ++x)
                 {
                     std::swap(m_chunks(x, z), m_chunks(x, z + 1));
+                    m_chunks(x,z)->GetPos().y -= 1;
                 }
             }
 
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                QueueChunk(m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().x,
-                m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().y + m_chunks.GetYSize(),
-                x, m_chunks.GetYSize() - 1);
+                m_chunks(x, m_chunks.GetYSize() - 1)->GetPos().y += m_chunks.GetYSize() - 1;
+                QueueChunk(m_offset.x, m_offset.y, x, m_chunks.GetYSize() - 1);
             }
 
             break;
         
         case BLOCK_SIDE_BACK:
             player.GetPos().z += (CHUNK_SIZE_Z * BS);
+            m_offset.y -= 1;
 
             for(int z = m_chunks.GetYSize() - 1; z > 0; --z)
             {
                 for(int x = 0; x < m_chunks.GetXSize(); ++x)
                 {
                     std::swap(m_chunks(x, z), m_chunks(x, z - 1));
+                    m_chunks(x,z)->GetPos().y += 1;
                 }
             }
             
             for(int x = 0; x < m_chunks.GetXSize(); ++x)
             {
-                QueueChunk(m_chunks(x, 0)->GetPos().x,
-                m_chunks(x, 0)->GetPos().y - m_chunks.GetYSize(),
-                x, 0);
+                m_chunks(x, 0)->GetPos().y -= m_chunks.GetYSize() - 1;
+                QueueChunk(m_offset.x, m_offset.y, x, 0);
             }
 
             break;
         
         case BLOCK_SIDE_LEFT:
             player.GetPos().x += (CHUNK_SIZE_X * BS);
+            m_offset.x -= 1;
 
             for(int x = m_chunks.GetXSize() - 1; x > 0; --x)
             {
                 for(int z = 0; z < m_chunks.GetYSize(); ++z)
                 {
                     std::swap(m_chunks(x, z), m_chunks(x - 1, z));
+                    m_chunks(x,z)->GetPos().x += 1;
                 }
             }
 
             for(int z = 0; z < m_chunks.GetYSize(); ++z)
             {
-                QueueChunk(m_chunks(0, z)->GetPos().x - m_chunks.GetXSize(),
-                m_chunks(0, z)->GetPos().y,
-                0, z);
+                m_chunks(0, z)->GetPos().x -= m_chunks.GetXSize() - 1;
+                QueueChunk(m_offset.x, m_offset.y, 0, z);
             }
 
             break;
         
         case BLOCK_SIDE_RIGHT:
             player.GetPos().x -= (CHUNK_SIZE_X * BS);
+            m_offset.x += 1;
 
             for(int x = 0; x < m_chunks.GetXSize() - 1; ++x)
             {
                 for(int z = 0; z < m_chunks.GetYSize(); ++z)
                 {
                     std::swap(m_chunks(x, z), m_chunks(x + 1, z));
+                    m_chunks(x,z)->GetPos().x -= 1;
                 }
             }
 
             for(int z = 0; z < m_chunks.GetYSize(); ++z)
             {
-                QueueChunk(m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().x + m_chunks.GetXSize(),
-                m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().y,
-                m_chunks.GetXSize() - 1, z);
+                m_chunks(m_chunks.GetXSize() - 1, z)->GetPos().x += m_chunks.GetXSize() - 1;
+                QueueChunk(m_offset.x, m_offset.y, m_chunks.GetXSize() - 1, z);
             }
 
             break;
     }
 }
 
-unsigned char World::GetBlock(float x, float y, float z)
+unsigned char World::GetBlock(float x, float y, float z) const
 {
-    int xBlock = x + m_chunks.GetXSize() * 0.5f * CHUNK_SIZE_X;
-    int yBlock = y;
-    int zBlock = z + m_chunks.GetYSize() * 0.5f * CHUNK_SIZE_Z;
-
-    int xChunk = xBlock / CHUNK_SIZE_X;
-    int yChunk = y / CHUNK_SIZE_Y;
-    int zChunk = zBlock / CHUNK_SIZE_Z;
-    
-    if(xChunk < 0 || yChunk < 0 || zChunk < 0 ||
-    xChunk >= m_chunks.GetXSize() || yChunk >= 1 || zChunk >= m_chunks.GetYSize())
+    if(x < 0 || y < 0 || z < 0 ||
+    x >= m_chunks.GetXSize() * CHUNK_SIZE_X || y >= CHUNK_SIZE_Y || z >= m_chunks.GetYSize() * CHUNK_SIZE_Z)
     {
         return BLOCK_AIR;
     }
 
-    return m_chunks(xChunk, zChunk)->Get(xBlock % CHUNK_SIZE_X, yBlock, zBlock % CHUNK_SIZE_Z);
+    int xChunk = x / CHUNK_SIZE_X;
+    int yChunk = z / CHUNK_SIZE_Z;
+
+    return m_chunks(xChunk, yChunk)->Get((int)x % CHUNK_SIZE_X, y, (int)z % CHUNK_SIZE_Z, *this);
 }
 
 void World::SetBlock(Player& player, float x, float y, float z, unsigned char block)

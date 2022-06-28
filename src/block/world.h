@@ -65,6 +65,8 @@ private:
     Grid2D< std::unique_ptr<Chunk> > m_chunks;
     std::vector<ChunkLoader*> m_loadingChunks;
 
+    glm::ivec2 m_offset;
+
     //std::vector<Chunk> m_renderChunks;
 
     Shader m_blockShader;
@@ -87,7 +89,7 @@ public:
     void Update(Player& player);
     void RenderSolid(const glm::mat4& vp);
 
-    unsigned char GetBlock(float x, float y, float z);
+    unsigned char GetBlock(float x, float y, float z) const;
     void SetBlock(Player& player, float x, float y, float z, unsigned char block);
     //unsigned char GetBlock() const;
 };
