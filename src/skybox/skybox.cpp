@@ -3,8 +3,11 @@
 #include "skybox.h"
 
 Skybox::Skybox() :
-m_shader("assets/shaders/skybox/vert.glsl", "assets/shaders/skybox/frag.glsl"), m_texture("assets/textures/Skybox1.png", GL_LINEAR)
+m_shader("assets/shaders/skybox/vert.glsl", "assets/shaders/skybox/frag.glsl"), m_texture("assets/textures/Skybox.png", GL_LINEAR)
 {
+    m_skyTime = 1.0f;
+    m_skyInc = -0.001f;
+
     MakeMesh();
     m_shader.SetUniform1f("u_tex", 0);
 }
@@ -12,13 +15,27 @@ m_shader("assets/shaders/skybox/vert.glsl", "assets/shaders/skybox/frag.glsl"), 
 Skybox::Skybox(const std::string& tex) :
 m_shader("assets/shaders/skybox/vert.glsl", "assets/shaders/skybox/frag.glsl"), m_texture(tex, GL_LINEAR)
 {
+    m_skyTime = 1.0f;
+    m_skyInc = -0.001f;
+
     MakeMesh();
     m_shader.SetUniform1f("u_tex", 0);
 }
 
 Skybox::~Skybox() {}
 
-void Skybox::Draw(const glm::mat4& vp, const glm::vec3& camPos, float time)
+void Skybox::Update()
+{
+    m_skyTime += m_skyInc;
+    if(m_skyTime > 1.0f || m_skyTime < 0.0f)
+    {
+        m_skyInc = -m_skyInc;
+        if(m_skyInc > 0) { m_skyTime = 0.0f; }
+        else if(m_skyInc < 0) { m_skyTime = 1.0f; }
+    }
+}
+
+void Skybox::Draw(const glm::mat4& vp, const glm::vec3& camPos)
 {
     glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), camPos);
     
@@ -29,7 +46,7 @@ void Skybox::Draw(const glm::mat4& vp, const glm::vec3& camPos, float time)
     m_va.Bind();
     
     m_shader.SetUniformMat4("u_mvp", vp * model);
-    m_shader.SetUniform1f("u_time", time);
+    m_shader.SetUniform1f("u_time", m_skyTime);
     
     glDisable(GL_DEPTH_TEST);
 

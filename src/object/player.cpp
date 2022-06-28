@@ -1,7 +1,16 @@
 #include "../input/input.h"
 #include "player.h"
 
-void Player::Update(const Player& player)
+void Player::OnKeyUp(SDL_Scancode key)
+{
+
+}
+void Player::OnKeyDown(SDL_Scancode key)
+{
+    
+}
+
+void Player::Update()
 {
     if(Input::Instance().GetKey(SDL_SCANCODE_A))
     {

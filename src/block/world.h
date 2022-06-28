@@ -3,12 +3,12 @@
 #include <memory>
 #include <vector>
 
-#include "../object/baseObject.h"
-
 #include "../shader/shader.h"
 #include "../texture/texture.h"
 
 #include "chunk.h"
+
+class Player;
 
 template<typename T>
 class Grid2D
@@ -59,7 +59,7 @@ public:
     glm::vec2 chunkIndex;
 };
 
-class World : public BaseObject
+class World
 {
 private:
     Grid2D< std::unique_ptr<Chunk> > m_chunks;

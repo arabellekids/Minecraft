@@ -3,9 +3,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
-#include "baseObject.h"
-
-class GameObject : public BaseObject
+class GameObject
 {
 protected:
     glm::vec3 m_pos;

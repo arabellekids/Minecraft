@@ -18,10 +18,15 @@ private:
     Vbo m_vb;
 
     void MakeMesh();
+
+    float m_skyTime;
+    float m_skyInc;
+
 public:
     Skybox();
     Skybox(const std::string& tex);
     ~Skybox();
 
-    void Draw(const glm::mat4& vp, const glm::vec3& camPos, float time);
+    void Draw(const glm::mat4& vp, const glm::vec3& camPos);
+    void Update();
 };

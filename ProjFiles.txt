@@ -17,6 +17,9 @@ set(FILES
     src/texture/texture.cpp
     src/texture/texture.h
 
+    src/app/app.cpp
+    src/app/app.h
+
     # ------ Minecraft code ------
     src/settings/settings.cpp
     src/settings/settings.h
