@@ -23,12 +23,14 @@ private:
     void GenGLBuffer();
 
 public:
-    Vbo(const std::vector<Vertex>& data, unsigned int usage);
+    Vbo();
     ~Vbo();
 
     void Bind() const;
     void UnBind() const;
 
-    void SetData(const std::vector<Vertex>& data, bool setData = true);
+    void DynamicBufferData(const std::vector<Vertex>& data, bool setData = true);
+    void StaticBufferData(const std::vector<Vertex>& data, bool setData = true);
+
     inline std::vector<Vertex>& GetData() { return m_data; }
 };

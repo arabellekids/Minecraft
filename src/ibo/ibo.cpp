@@ -3,13 +3,9 @@
 
 #include "ibo.h"
 
-Ibo::Ibo(const std::vector<unsigned short>& data, unsigned int usage) : m_id(0)
+Ibo::Ibo() : m_id(0)
 {
-    m_data = data;
-
     GenGLBuffer();
-    Bind();
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * data.size(), data.data(), usage);
 }
 Ibo::~Ibo()
 {
@@ -38,10 +34,21 @@ void Ibo::UnBind() const
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Ibo::SetData(const std::vector<unsigned short>& data, bool setData)
+void Ibo::DynamicBufferData(const std::vector<unsigned short>& data, bool setData)
 {
     Bind();
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * data.size(), data.data(), GL_DYNAMIC_DRAW);
+
+    if(setData)
+    {
+        m_data = data;
+    }
+}
+
+void Ibo::StaticBufferData(const std::vector<unsigned short>& data, bool setData)
+{
+    Bind();
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * data.size(), data.data(), GL_STATIC_DRAW);
 
     if(setData)
     {

@@ -11,12 +11,14 @@ private:
     void GenGLBuffer();
 
 public:
-    Ibo(const std::vector<unsigned short>& data, unsigned int usage);
+    Ibo();
     ~Ibo();
 
     void Bind() const;
     void UnBind() const;
 
-    void SetData(const std::vector<unsigned short>& data, bool setData = true);
+    void DynamicBufferData(const std::vector<unsigned short>& data, bool setData = true);
+    void StaticBufferData(const std::vector<unsigned short>& data, bool setData = true);
+
     inline std::vector<unsigned short>& GetData() { return m_data; }
 };

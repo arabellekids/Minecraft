@@ -3,17 +3,21 @@
 #include "skybox.h"
 
 Skybox::Skybox() :
-m_shader("assets/shaders/skybox/vert.glsl", "assets/shaders/skybox/frag.glsl"), m_texture("assets/textures/Skybox1.png", GL_LINEAR),
-m_ib({}, GL_STATIC_DRAW), m_vb({}, GL_STATIC_DRAW)
+m_shader("assets/shaders/skybox/vert.glsl", "assets/shaders/skybox/frag.glsl"), m_texture("assets/textures/Skybox1.png", GL_LINEAR)
 {
+    m_vb.StaticBufferData({});
+    m_ib.StaticBufferData({});
+    
     MakeMesh();
     m_shader.SetUniform1f("u_tex", 0);
 }
 
 Skybox::Skybox(const std::string& tex) :
-m_shader("assets/shaders/skybox/vert.glsl", "assets/shaders/skybox/frag.glsl"), m_texture(tex, GL_LINEAR),
-m_ib({}, GL_STATIC_DRAW), m_vb({}, GL_STATIC_DRAW)
+m_shader("assets/shaders/skybox/vert.glsl", "assets/shaders/skybox/frag.glsl"), m_texture(tex, GL_LINEAR)
 {
+    m_vb.StaticBufferData({});
+    m_ib.StaticBufferData({});
+
     MakeMesh();
     m_shader.SetUniform1f("u_tex", 0);
 }
@@ -100,8 +104,8 @@ void Skybox::MakeMesh()
         20,22,23
     };
 
-    m_vb.SetData(verts);
-    m_ib.SetData(indices);
+    m_vb.DynamicBufferData(verts, true);
+    m_ib.DynamicBufferData(indices, true);
     
     BufferLayout layout;
     layout.Push<float>(3); // x,y,z

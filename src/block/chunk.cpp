@@ -10,7 +10,7 @@
 #define min(x,y) (x < y) ? (x) : (y)
 #define abs(x) ((x) > 0) ? (x) : (-x)
 
-Chunk::Chunk() : m_pos(0, 0), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
+Chunk::Chunk() : m_pos(0, 0), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
     m_isLoading = false;
     
@@ -22,7 +22,7 @@ Chunk::Chunk() : m_pos(0, 0), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMI
     m_va.AddBuffer(m_vb, layout);
 }
 
-Chunk::Chunk(const glm::ivec2& pos) : m_pos(pos), m_vb({}, GL_DYNAMIC_DRAW), m_solidIB({}, GL_DYNAMIC_DRAW), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
+Chunk::Chunk(const glm::ivec2& pos) : m_pos(pos), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
     m_isLoading = false;
     
@@ -153,7 +153,7 @@ void Chunk::GenerateVertices(const World& world)
     } // end loop z
 
     // Update the OpenGL vertex buffer data
-    m_vb.SetData(m_vb.GetData(), false);
+    m_vb.DynamicBufferData(m_vb.GetData(), false);
 }
 
 void Chunk::GenerateIndices(const glm::vec3& pPos)
@@ -175,7 +175,7 @@ void Chunk::GenerateIndices(const glm::vec3& pPos)
         m_solidIB.GetData().push_back(index+3);
     }
 
-    m_solidIB.SetData(m_solidIB.GetData(), false);
+    m_solidIB.DynamicBufferData(m_solidIB.GetData(), false);
 }
 
 unsigned char Chunk::GetBlock(int x, int y, int z, const World& world) const
