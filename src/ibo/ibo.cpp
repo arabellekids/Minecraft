@@ -6,6 +6,7 @@
 Ibo::Ibo() : m_id(0)
 {
     GenGLBuffer();
+    Bind();
 }
 Ibo::~Ibo()
 {

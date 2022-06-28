@@ -6,6 +6,7 @@
 Vbo::Vbo() : m_id(0)
 {
     GenGLBuffer();
+    Bind();
 }
 
 Vbo::~Vbo()
