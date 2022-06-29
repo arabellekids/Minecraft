@@ -64,7 +64,7 @@ struct BlockHitInfo
 {
     glm::ivec3 pos;
     glm::ivec3 neighbor;
-    unsigned char block;
+    const BlockType* blockData;
 };
 
 class World

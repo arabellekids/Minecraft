@@ -3,12 +3,12 @@
 #include "blockPalette.h"
 
 static std::vector<BlockType> g_palette = {
-    { { -1, -1, -1, -1, -1, -1 }, false }, // Air
+    { { -1, -1, -1, -1, -1, -1 }, BLOCK_AIR, false, 1.0f }, // Air
 
-    { { 1, 1, 1, 1, 0, 2 }, true }, // Grass
-    { { 2, 2, 2, 2, 2, 2 }, true }, // Dirt
-    { { 3, 3, 3, 3, 3, 3 }, true }, // Water
-    { { 4, 4, 4, 4, 4, 4 }, true } // Stone
+    { { 1, 1, 1, 1, 0, 2 }, BLOCK_GRASS, true, 1.0f }, // Grass
+    { { 2, 2, 2, 2, 2, 2 }, BLOCK_DIRT, true, 1.0f }, // Dirt
+    { { 3, 3, 3, 3, 3, 3 }, BLOCK_WATER, false, 0.8f }, // Water
+    { { 4, 4, 4, 4, 4, 4 }, BLOCK_STONE, true, 1.0f } // Stone
 };
 
 const std::vector<BlockType>& GetPalette() { return g_palette; }

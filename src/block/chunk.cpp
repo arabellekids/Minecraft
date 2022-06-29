@@ -59,7 +59,14 @@ void Chunk::Load(const glm::i64vec2& pos)
                 }
                 else
                 {
-                    m_blocks(x,y,z) = BLOCK_AIR;
+                    if(y < 32)
+                    {
+                        m_blocks(x,y,z) = BLOCK_WATER;
+                    }
+                    else
+                    {
+                        m_blocks(x,y,z) = BLOCK_AIR;
+                    }
                 }
             }
         }
@@ -73,7 +80,8 @@ void Chunk::Load(const glm::i64vec2& pos)
             int grassLayers = 0;
             for(int y = CHUNK_SIZE_Y - 1; y > 0; --y)
             {
-                if(m_blocks(x,y,z) != 0)
+                const auto& blockType = GetBlockType(m_blocks(x,y,z));
+                if(blockType.isSolid)
                 {
                     if(y < CHUNK_SIZE_Y && m_blocks(x,y + 1,z) == BLOCK_AIR)
                     {
@@ -97,7 +105,7 @@ void Chunk::GenerateVertices(const World& world)
     m_vb.GetData().clear();
     m_solidFaces.clear();
 
-    std::array< glm::ivec3, 6> neighbors = {
+    std::array< glm::ivec3, 6> directions = {
         glm::vec3( 0,  0,  1),
         glm::vec3( 0,  0, -1),
         glm::vec3(-1,  0,  0),
@@ -120,28 +128,47 @@ void Chunk::GenerateVertices(const World& world)
                 if(m_blocks(x, y, z) == BLOCK_AIR) { continue; }
                 const BlockType& block = GetBlockType( m_blocks(x, y, z) );
                 
+                std::array<const BlockType*, 6> neighbors;
+
                 for(int side = 0; side < 6; ++side)
                 {
-                    const BlockType& neighbor = GetBlockType( GetBlock(
-                        x + neighbors[side].x,
-                        y + neighbors[side].y,
-                        z + neighbors[side].z,
+                    neighbors[side] = &GetBlockType( GetBlock(
+                        x + directions[side].x,
+                        y + directions[side].y,
+                        z + directions[side].z,
                         world
                     ) );
-                    if(neighbor.isSolid) { continue; }
+                }
+
+                float vHeight = (neighbors[BLOCK_SIDE_TOP]->blockID != block.blockID) ? block.vHeight : 1.0f;
+
+                for(int side = 0; side < 6; ++side)
+                {
+                    const BlockType& neighbor = *neighbors[side];
+
+                    // Normal block
+                    if(vHeight >= 1.0f || side != BLOCK_SIDE_TOP)
+                    {
+                        if(neighbor.blockID != BLOCK_AIR && (neighbor.isSolid || block.vHeight == neighbor.vHeight )) { continue; }
+                    }
+                    // Lowered block
+                    else
+                    {
+                        if(block.vHeight == neighbor.vHeight) { continue; }
+                    }
 
                     float u = GetBlockFaceU(block, side);
                     float v = GetBlockFaceV(block, side);
 
                     // Add the block face, to mabye later be sorted
                     unsigned int faceIndex = m_vb.GetData().size() >> 2;
-                    m_solidFaces.push_back( {faceIndex, blockFaces[side] } );
+                    m_solidFaces.push_back( {faceIndex, glm::vec3(blockFaces[side].x, blockFaces[side].y*vHeight, blockFaces[side].z) } );
 
                     // Add the 4 vertices of the quad
                     for(int i = 0; i < 4; ++i)
                     {
                         m_vb.GetData().push_back( {
-                            blockVerts[side][i].x + x, blockVerts[side][i].y + y, blockVerts[side][i].z + z,
+                            blockVerts[side][i].x + x, blockVerts[side][i].y*vHeight + y, blockVerts[side][i].z + z,
                             blockVerts[side][i].u + u, blockVerts[side][i].v + v,
                             blockVerts[side][i].light
                         } );

@@ -18,8 +18,11 @@ enum BlockID
 struct BlockType
 {
     std::array<int, 6> textures;
+    
+    BlockID blockID;
 
     bool isSolid = true;
+    float vHeight = 1.0f;
 };
 
 const std::vector<BlockType>& GetPalette();

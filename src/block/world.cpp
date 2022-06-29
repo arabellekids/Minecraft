@@ -402,11 +402,6 @@ bool World::Raycast(const Ray& ray, BlockHitInfo& info) const
     planes[1].dist = ( ((signY < 0) ? 0 : 1) - localPos.y ) / dir.y;
     planes[2].dist = ( ((signZ < 0) ? 0 : 1) - localPos.z ) / dir.z;
 
-    if(planes[0].dist < 0 || planes[1].dist < 0 || planes[2].dist < 0)
-    {
-        std::cout << "Negative dist...\n";
-    }
-
     planes[0].inc = signX / dir.x;
     planes[1].inc = signY / dir.y;
     planes[2].inc = signZ / dir.z;
@@ -426,12 +421,12 @@ bool World::Raycast(const Ray& ray, BlockHitInfo& info) const
 
         if(!IsValidBlock(blockIndex.x, blockIndex.y, blockIndex.z)) { return false; }
 
-        auto block = GetBlockFromIndex(blockIndex.x, blockIndex.y, blockIndex.z);
-        if(block != BLOCK_AIR)
+        auto& block = GetBlockType( GetBlockFromIndex(blockIndex.x, blockIndex.y, blockIndex.z) );
+        if(block.isSolid)
         {
             info.pos = cells[0];
             info.neighbor = cells[1];
-            info.block = block;
+            info.blockData = &block;
             return true;
         }
 
