@@ -185,7 +185,7 @@ unsigned char Chunk::GetBlock(int x, int y, int z, const World& world) const
         return m_blocks(x,y,z);
     }
 
-    return world.GetBlock(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z);
+    return world.GetBlockFromIndex(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z);
 }
 
 void Chunk::SetBlock(int x, int y, int z, unsigned char block, World& world)
@@ -196,5 +196,5 @@ void Chunk::SetBlock(int x, int y, int z, unsigned char block, World& world)
         return;
     }
 
-    world.SetBlock(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z, block);
+    world.SetBlockFromIndex(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z, block);
 }

@@ -56,6 +56,64 @@ static std::vector< std::vector<Vertex> > g_blockVerts = {
     }
 };
 
+static std::vector<Vertex> g_cubeVerts = {
+    // North = +Z
+    { 0.5, 0.5, 0.5, 0, 0, 0.8f },
+    { 0.5,-0.5, 0.5, 0, 1, 0.8f },
+    {-0.5,-0.5, 0.5, 1, 1, 0.8f },
+    {-0.5, 0.5, 0.5, 1, 0, 0.8f },
+    
+    // South = -Z
+    {-0.5, 0.5,-0.5, 0, 0, 0.8f },
+    {-0.5,-0.5,-0.5, 0, 1, 0.8f },
+    { 0.5,-0.5,-0.5, 1, 1, 0.8f },
+    { 0.5, 0.5,-0.5, 1, 0, 0.8f },
+    
+    // West = -X
+    {-0.5, 0.5, 0.5, 0, 0, 0.9f },
+    {-0.5,-0.5, 0.5, 0, 1, 0.9f },
+    {-0.5,-0.5,-0.5, 1, 1, 0.9f },
+    {-0.5, 0.5,-0.5, 1, 0, 0.9f },
+    
+    // East = +X
+    { 0.5, 0.5,-0.5, 0, 0, 0.9f },
+    { 0.5,-0.5,-0.5, 0, 1, 0.9f },
+    { 0.5,-0.5, 0.5, 1, 1, 0.9f },
+    { 0.5, 0.5, 0.5, 1, 0, 0.9f },
+    
+    // Up = +Y
+    {-0.5, 0.5, 0.5, 0, 0, 1.0f },
+    {-0.5, 0.5,-0.5, 0, 1, 1.0f },
+    { 0.5, 0.5,-0.5, 1, 1, 1.0f },
+    { 0.5, 0.5, 0.5, 1, 0, 1.0f },
+    
+    // Down = -Y
+    {-0.5,-0.5,-0.5, 0, 0, 0.6f },
+    {-0.5,-0.5, 0.5, 0, 1, 0.6f },
+    { 0.5,-0.5, 0.5, 1, 1, 0.6f },
+    { 0.5,-0.5,-0.5, 1, 0, 0.6f }
+};
+
+static std::vector<unsigned short> g_cubeIndices = {
+    0,1,2,
+    0,2,3,
+    
+    4,5,6,
+    4,6,7,
+    
+    8,9,10,
+    8,10,11,
+    
+    12,13,14,
+    12,14,15,
+    
+    16,17,18,
+    16,18,19,
+    
+    20,21,22,
+    20,22,23
+};
+
 static std::vector<glm::vec3> g_blockFaceCenters = {
     {0.5f, 0.5f, 1.0f},
     {0.5f, 0.5f, 0.0f},
@@ -73,4 +131,14 @@ const std::vector< std::vector<Vertex> >& GetBlockVertices()
 const std::vector<glm::vec3>& GetBlockFaceCenters()
 {
     return g_blockFaceCenters;
+}
+
+const std::vector<Vertex>& GetCubeVertices()
+{
+    return g_cubeVerts;
+}
+
+const std::vector<unsigned short>& GetCubeIndices()
+{
+    return g_cubeIndices;
 }

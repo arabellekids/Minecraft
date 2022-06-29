@@ -20,3 +20,12 @@ public:
     const float& GetLength() const { return m_length; }
     float& GetLength() { return m_length; }
 };
+
+struct AxisPlane
+{
+    glm::ivec3 normal;
+    float dist;
+    float inc;
+
+    bool operator< (const AxisPlane& b) { return dist < b.dist; }
+};

@@ -277,10 +277,9 @@ void World::ShiftGrid(BlockSide dir, Player& player)
     }
 }
 
-unsigned char World::GetBlock(int x, int y, int z) const
+unsigned char World::GetBlockFromIndex(int x, int y, int z) const
 {
-    if(x < 0 || y < 0 || z < 0 ||
-    x >= m_chunks.GetXSize() * CHUNK_SIZE_X || y >= CHUNK_SIZE_Y || z >= m_chunks.GetYSize() * CHUNK_SIZE_Z)
+    if(!IsValidBlock(x, y, z))
     {
         return BLOCK_AIR;
     }
@@ -291,10 +290,24 @@ unsigned char World::GetBlock(int x, int y, int z) const
     return m_chunks(xChunk, yChunk)->GetBlock(x % CHUNK_SIZE_X, y, z % CHUNK_SIZE_Z, *this);
 }
 
-void World::SetBlock(int x, int y, int z, unsigned char block)
+unsigned char World::GetBlockFromPos(float x, float y, float z) const
 {
-    if(x < 0 || y < 0 || z < 0 ||
-    x >= m_chunks.GetXSize() * CHUNK_SIZE_X || y >= CHUNK_SIZE_Y || z >= m_chunks.GetYSize() * CHUNK_SIZE_Z)
+    auto index = PosToBlock(x, y, z);
+
+    if(!IsValidBlock(index.x, index.y, index.z))
+    {
+        return BLOCK_AIR;
+    }
+
+    int xChunk = index.x / CHUNK_SIZE_X;
+    int yChunk = index.z / CHUNK_SIZE_Z;
+
+    return m_chunks(xChunk, yChunk)->GetBlock(index.x % CHUNK_SIZE_X, index.y, index.z % CHUNK_SIZE_Z, *this);
+}
+
+void World::SetBlockFromIndex(int x, int y, int z, unsigned char block)
+{
+    if(!IsValidBlock(x, y, z))
     {
         return;
     }
@@ -310,101 +323,125 @@ void World::SetBlock(int x, int y, int z, unsigned char block)
     GenNeighborChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
 }
 
-bool World::IsValidChunk(int x, int y)
+void World::SetBlockFromPos(float x, float y, float z, unsigned char block)
+{
+    auto index = PosToBlock(x, y, z);
+    
+    if(!IsValidBlock(index.x, index.y, index.z))
+    {
+        return;
+    }
+
+    int xChunk = index.x / CHUNK_SIZE_X;
+    int yChunk = index.z / CHUNK_SIZE_Z;
+
+    m_chunks(xChunk, yChunk)->SetBlock(index.x % CHUNK_SIZE_X, index.y, index.z % CHUNK_SIZE_Z, block, *this);
+
+    GenChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
+
+    // Regenerate neighbors
+    GenNeighborChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
+}
+
+glm::ivec3 World::PosToBlock(float x, float y, float z) const
+{
+    int blockX = x + (m_chunks.GetXSize() * 0.5f) * CHUNK_SIZE_X;
+    int blockY = y;
+    int blockZ = z + (m_chunks.GetYSize() * 0.5f) * CHUNK_SIZE_Z;
+
+    return glm::ivec3(blockX, blockY, blockZ);
+}
+
+glm::vec3 World::BlockToPos(int x, int y, int z) const
+{
+    float posX = x - (m_chunks.GetXSize() * 0.5f) * CHUNK_SIZE_X;
+    float posY = y;
+    float posZ = z - (m_chunks.GetYSize() * 0.5f) * CHUNK_SIZE_Z;
+
+    return glm::vec3(posX, posY, posZ);
+}
+
+bool World::IsValidChunk(int x, int y) const
 {
     return (x >= 0 && y >= 0 && x < m_chunks.GetXSize() && y < m_chunks.GetYSize() && !m_chunks(x,y)->GetLoading());
 }
 
-bool World::Raycast(const Ray& ray, BlockHitInfo& info, bool ignoreNear)
+bool World::IsValidBlock(int x, int y, int z) const
 {
-    glm::vec3 inc = ray.GetDirection() * 0.5f;
-    
-    glm::vec3 startPos = ray.GetOrigin();
-    glm::ivec3 blockPos = startPos;
+    return (x >= 0 && y >= 0 && z >= 0 &&
+    x < m_chunks.GetXSize() * CHUNK_SIZE_X && y < CHUNK_SIZE_Y && z < m_chunks.GetYSize() * CHUNK_SIZE_Z &&
+    !m_chunks(x / CHUNK_SIZE_X, z / CHUNK_SIZE_Z)->GetLoading());
+}
 
-    glm::vec3 cur(startPos.x - (int)startPos.x - 0.5f,
-    startPos.y - (int)startPos.y - 0.5f,
-    startPos.z - (int)startPos.z - 0.5f);
+bool World::Raycast(const Ray& ray, BlockHitInfo& info) const
+{
+    glm::vec3 origin = ray.GetOrigin();
+    glm::vec3 dir = ray.GetDirection();
+    float length = ray.GetLength();
     
-    int length = ray.GetLength();
-    float absX = 0.0f;
-    float absY = 0.0f;
-    float absZ = 0.0f;
+    glm::vec3 localPos(origin.x - std::floor(origin.x),
+    origin.y - std::floor(origin.y),
+    origin.z - std::floor(origin.z));
 
-    for(int i = 0; i < length; ++i)
+    glm::ivec3 startPos(std::floor(origin.x), std::floor(origin.y), std::floor(origin.z));
+
+    std::array<AxisPlane, 3> planes = {{
+        { {1, 0, 0}, 0.0f, 0.0f },
+        { {0, 1, 0}, 0.0f, 0.0f },
+        { {0, 0, 1}, 0.0f, 0.0f }
+    }};
+
+    glm::ivec3 cellPos(std::floor(origin.x), std::floor(origin.y), std::floor(origin.z));
+    std::array<glm::ivec3, 2> cells = { cellPos, cellPos };
+
+    int signX = (dir.x < 0) ? -1 : 1;
+    int signY = (dir.y < 0) ? -1 : 1;
+    int signZ = (dir.z < 0) ? -1 : 1;
+
+    planes[0].dist = ( ((signX < 0) ? 0 : 1) - localPos.x ) / dir.x;
+    planes[1].dist = ( ((signY < 0) ? 0 : 1) - localPos.y ) / dir.y;
+    planes[2].dist = ( ((signZ < 0) ? 0 : 1) - localPos.z ) / dir.z;
+
+    if(planes[0].dist < 0 || planes[1].dist < 0 || planes[2].dist < 0)
     {
-        absX = abs(cur.x);
-        absY = abs(cur.y);
-        absZ = abs(cur.z);
+        std::cout << "Negative dist...\n";
+    }
+
+    planes[0].inc = signX / dir.x;
+    planes[1].inc = signY / dir.y;
+    planes[2].inc = signZ / dir.z;
+
+    planes[0].normal.x *= signX;
+    planes[1].normal.y *= signY;
+    planes[2].normal.z *= signZ;
+    
+    std::sort(planes.begin(), planes.end());
+
+    while(planes[0].dist < length)
+    {
+        cells[1] = cells[0];
+        cells[0] += planes[0].normal;
         
-        while(absX > 0.5f || absY > 0.5f || absZ > 0.5f)
+        auto blockIndex = PosToBlock(cells[0].x, cells[0].y, cells[0].z);
+
+        if(!IsValidBlock(blockIndex.x, blockIndex.y, blockIndex.z)) { return false; }
+
+        auto block = GetBlockFromIndex(blockIndex.x, blockIndex.y, blockIndex.z);
+        if(block != BLOCK_AIR)
         {
-            absX = abs(cur.x);
-            absY = abs(cur.y);
-            absZ = abs(cur.z);
-            
-            // Front
-            if(absZ >= absX && absZ >= absY && cur.z > 0.5f)
-            {
-                blockPos.z++;
-                cur.z -= 1.0f;
-                info.side = BLOCK_SIDE_BACK;
-            }
-            // Back
-            else if(absZ >= absX && absZ >= absY && cur.z < 0.5f)
-            {
-                blockPos.z--;
-                cur.z += 1.0f;
-                info.side = BLOCK_SIDE_FRONT;
-                
-            }
-            
-            // Right
-            else if(absX >= absY && absX >= absZ && cur.x > 0.5f)
-            {
-                blockPos.x++;
-                cur.x -= 1.0f;
-                info.side = BLOCK_SIDE_LEFT;
-                
-            }
-            // Left
-            else if(absX >= absY && absX >= absZ && cur.x < 0.5f)
-            {
-                blockPos.x--;
-                cur.x += 1.0f;
-                info.side = BLOCK_SIDE_RIGHT;    
-            }
-
-            // Up
-            else if(absY >= absX && absY >= absZ && cur.y > 0.5f)
-            {
-                blockPos.y++;
-                cur.y -= 1.0f;
-                info.side = BLOCK_SIDE_BOTTOM;
-                
-            }
-            // Down
-            else if(absY >= absX && absY >= absZ && cur.y < 0.5f)
-            {
-                blockPos.y--;
-                cur.y += 1.0f;
-                info.side = BLOCK_SIDE_TOP;
-            }
-
-            auto block = GetBlock(blockPos.x, blockPos.y, blockPos.z);
-            if(block == BLOCK_AIR) { continue; }
-            
-            // Too close
-            glm::vec3 toBlock(blockPos.x - startPos.x, blockPos.y - startPos.y, blockPos.z - startPos.z);
-            if(glm::dot(toBlock, toBlock) <= 3 && ignoreNear) { return false; }
-
+            info.pos = cells[0];
+            info.neighbor = cells[1];
             info.block = block;
-            info.pos = blockPos;
-
             return true;
         }
 
-        cur += inc;
+        //cellIndex = !cellIndex;
+        planes[0].dist += planes[0].inc;
+
+        if(planes[0].dist > planes[1].dist)
+        {
+            std::sort(planes.begin(), planes.end());
+        }
     }
 
     return false;

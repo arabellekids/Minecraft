@@ -29,13 +29,16 @@ App::App(int w, int h, bool fullscreen) : m_bRunning(false), m_pWindow(nullptr),
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
     m_projection = glm::perspectiveLH(90.0f * 0.01745329251994329576923690768489f, (float)w / (float)h, 0.2f, 200.0f);
 
-    SDL_ShowCursor(SDL_DISABLE);
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    // SDL_ShowCursor(SDL_DISABLE);
+    // SDL_SetRelativeMouseMode(SDL_TRUE);
 
     m_world = std::make_unique<World>();
     m_player = std::make_unique<Player>();
@@ -114,7 +117,8 @@ void App::Run()
         
         m_skybox->Draw(vp, m_player->GetPos());
         m_world->RenderSolid(vp);
-
+        m_player->Draw(vp);
+        
         SDL_GL_SwapWindow(m_pWindow);
     }
 }

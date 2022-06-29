@@ -16,3 +16,6 @@ enum BlockSide
 
 const std::vector< std::vector<Vertex> >& GetBlockVertices();
 const std::vector<glm::vec3>& GetBlockFaceCenters();
+
+const std::vector<Vertex>& GetCubeVertices();
+const std::vector<unsigned short>& GetCubeIndices();

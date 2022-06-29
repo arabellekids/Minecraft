@@ -63,7 +63,7 @@ public:
 struct BlockHitInfo
 {
     glm::ivec3 pos;
-    BlockSide side;
+    glm::ivec3 neighbor;
     unsigned char block;
 };
 
@@ -89,7 +89,12 @@ private:
     void LoadChunks(Player& player);
     void QueueChunk(long xPos, long zPos, int xChunk, int yChunk);
 
-    bool IsValidChunk(int x, int y);
+    bool IsValidChunk(int x, int y) const;
+    bool IsValidBlock(int x, int y, int z) const;
+
+    glm::ivec3 PosToBlock(float x, float y, float z) const;
+    glm::vec3 BlockToPos(int x, int y, int z) const;
+    
 public:
     World();
     ~World();
@@ -97,8 +102,12 @@ public:
     void Update(Player& player);
     void RenderSolid(const glm::mat4& vp);
 
-    bool Raycast(const Ray& ray, BlockHitInfo& info, bool ignoreNear = true);
+    bool Raycast(const Ray& ray, BlockHitInfo& info) const;
 
-    unsigned char GetBlock(int x, int y, int z) const;
-    void SetBlock(int x, int y, int z, unsigned char block);
+    unsigned char GetBlockFromPos(float x, float y, float z) const;
+    unsigned char GetBlockFromIndex(int x, int y, int z) const;
+
+    void SetBlockFromPos(float x, float y, float z, unsigned char block);
+    void SetBlockFromIndex(int x, int y, int z, unsigned char block);
+    
 };

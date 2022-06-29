@@ -1,0 +1,15 @@
+#version 130
+
+attribute vec4 a_pos;
+attribute vec2 a_uv;
+attribute float a_light;
+
+uniform mat4 u_mvp;
+
+out vec2 v_texCoord;
+
+void main()
+{
+    gl_Position =  u_mvp * (a_pos * 5.0);
+    v_texCoord = a_uv;
+};
