@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <cmath>
+
 #include <GLES3/gl32.h>
 #include <iostream>
 
@@ -38,7 +40,7 @@ Chunk::~Chunk() {}
 
 void Chunk::Load(const glm::i64vec2& pos)
 {
-    //std::cout << "m_pos = { x = " << m_pos.x << ", y = " << m_pos.y << " }\n";
+    //std::cout << "pos = { x = " << pos.x << ", y = " << pos.y << " }\n";
     long chunkX = (m_pos.x + pos.x) * CHUNK_SIZE_X;
     long chunkZ = (m_pos.y + pos.y) * CHUNK_SIZE_Z;
 
@@ -80,8 +82,8 @@ void Chunk::Load(const glm::i64vec2& pos)
             int grassLayers = 0;
             for(int y = CHUNK_SIZE_Y - 1; y > 0; --y)
             {
-                const auto& blockType = GetBlockType(m_blocks(x,y,z));
-                if(blockType.isSolid)
+                const auto& data = GetBlockData(m_blocks(x,y,z));
+                if(data.type == BlockType::Solid)
                 {
                     if(y < CHUNK_SIZE_Y && m_blocks(x,y + 1,z) == BLOCK_AIR)
                     {
@@ -104,6 +106,7 @@ void Chunk::GenerateVertices(const World& world)
 {
     m_vb.GetData().clear();
     m_solidFaces.clear();
+    m_transparentFaces.clear();
 
     std::array< glm::ivec3, 6> directions = {
         glm::vec3( 0,  0,  1),
@@ -126,13 +129,15 @@ void Chunk::GenerateVertices(const World& world)
             for(int x = 0; x < CHUNK_SIZE_X; ++x)
             {
                 if(m_blocks(x, y, z) == BLOCK_AIR) { continue; }
-                const BlockType& block = GetBlockType( m_blocks(x, y, z) );
+                const auto& block = GetBlockData( m_blocks(x, y, z) );
                 
-                std::array<const BlockType*, 6> neighbors;
+                std::array<const BlockData*, 6> neighbors;
+
+                auto& faces = (block.type != BlockType::Solid) ? m_transparentFaces : m_solidFaces;
 
                 for(int side = 0; side < 6; ++side)
                 {
-                    neighbors[side] = &GetBlockType( GetBlock(
+                    neighbors[side] = &GetBlockData( GetBlock(
                         x + directions[side].x,
                         y + directions[side].y,
                         z + directions[side].z,
@@ -140,35 +145,29 @@ void Chunk::GenerateVertices(const World& world)
                     ) );
                 }
 
-                float vHeight = (neighbors[BLOCK_SIDE_TOP]->blockID != block.blockID) ? block.vHeight : 1.0f;
+                float height = (neighbors[BLOCK_SIDE_TOP]->type != block.type) ? block.height : 1.0f;
 
                 for(int side = 0; side < 6; ++side)
                 {
-                    const BlockType& neighbor = *neighbors[side];
+                    const auto& neighbor = *neighbors[side];
 
-                    // Normal block
-                    if(vHeight >= 1.0f || side != BLOCK_SIDE_TOP)
+                    if(height == 1.0f || side != BLOCK_SIDE_TOP)
                     {
-                        if(neighbor.blockID != BLOCK_AIR && (neighbor.isSolid || block.vHeight == neighbor.vHeight )) { continue; }
+                        if(neighbor.type == block.type || (block.type != BlockType::Solid && neighbor.type == BlockType::Solid)) { continue; }
                     }
-                    // Lowered block
-                    else
-                    {
-                        if(block.vHeight == neighbor.vHeight) { continue; }
-                    }
-
+                    
                     float u = GetBlockFaceU(block, side);
                     float v = GetBlockFaceV(block, side);
 
                     // Add the block face, to mabye later be sorted
                     unsigned int faceIndex = m_vb.GetData().size() >> 2;
-                    m_solidFaces.push_back( {faceIndex, glm::vec3(blockFaces[side].x, blockFaces[side].y*vHeight, blockFaces[side].z) } );
+                    faces.push_back( BlockFace(faceIndex, glm::vec3(x+blockFaces[side].x, y+blockFaces[side].y*height, z+blockFaces[side].z)) );
 
                     // Add the 4 vertices of the quad
                     for(int i = 0; i < 4; ++i)
                     {
                         m_vb.GetData().push_back( {
-                            blockVerts[side][i].x + x, blockVerts[side][i].y*vHeight + y, blockVerts[side][i].z + z,
+                            blockVerts[side][i].x + x, blockVerts[side][i].y*height + y, blockVerts[side][i].z + z,
                             blockVerts[side][i].u + u, blockVerts[side][i].v + v,
                             blockVerts[side][i].light
                         } );
@@ -187,9 +186,6 @@ void Chunk::GenerateIndices(const glm::vec3& pPos)
 {
     m_solidIB.GetData().clear();
     
-    // ToDo: sort the faces
-    // sort(m_solidFaces)
-
     for(auto i = 0; i < m_solidFaces.size(); ++i)
     {
         auto index = m_solidFaces[i].index << 2;
@@ -203,6 +199,42 @@ void Chunk::GenerateIndices(const glm::vec3& pPos)
     }
 
     m_solidIB.DynamicBufferData(m_solidIB.GetData(), false);
+
+    RegenerateTransparency(pPos);
+}
+
+void Chunk::SortFaces(const glm::vec3& pPos)
+{
+    for(auto i = 0; i < m_transparentFaces.size(); ++i)
+    {
+        auto& face = m_transparentFaces[i];
+        glm::vec3 toFace(face.center.x - pPos.x, face.center.y - pPos.y, face.center.z - pPos.z);
+        m_transparentFaces[i].dist = glm::dot(toFace, toFace);
+    }
+
+    std::sort(m_transparentFaces.begin(), m_transparentFaces.end());
+}
+
+void Chunk::RegenerateTransparency(const glm::vec3& pPos)
+{
+    m_transparentIB.GetData().clear();
+    
+    // ToDo: sort the faces
+    SortFaces(pPos);
+    
+    for(auto i = 0; i < m_transparentFaces.size(); ++i)
+    {
+        auto index = m_transparentFaces[i].index << 2;
+        m_transparentIB.GetData().push_back(index);
+        m_transparentIB.GetData().push_back(index+1);
+        m_transparentIB.GetData().push_back(index+2);
+
+        m_transparentIB.GetData().push_back(index);
+        m_transparentIB.GetData().push_back(index+2);
+        m_transparentIB.GetData().push_back(index+3);
+    }
+
+    m_transparentIB.DynamicBufferData(m_transparentIB.GetData(), false);
 }
 
 unsigned char Chunk::GetBlock(int x, int y, int z, const World& world) const

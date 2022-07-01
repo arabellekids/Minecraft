@@ -64,7 +64,17 @@ struct BlockHitInfo
 {
     glm::ivec3 pos;
     glm::ivec3 neighbor;
-    const BlockType* blockData;
+    const BlockData* blockData;
+};
+
+struct RenderChunk
+{
+    glm::mat4 model;
+    Chunk* chunk;
+    
+    float dist = 0.0f;
+
+    bool operator< (const RenderChunk& b) const { return dist > b.dist; }
 };
 
 class World
@@ -75,7 +85,7 @@ private:
 
     glm::ivec2 m_offset;
 
-    //std::vector<Chunk> m_renderChunks;
+    std::vector<RenderChunk> m_renderChunks;
 
     Shader m_blockShader;
     Texture m_blockAtlasTex;
@@ -94,13 +104,12 @@ private:
 
     glm::ivec3 PosToBlock(float x, float y, float z) const;
     glm::vec3 BlockToPos(int x, int y, int z) const;
-    
 public:
     World();
     ~World();
 
     void Update(Player& player);
-    void RenderSolid(const glm::mat4& vp);
+    void RenderSolid(const glm::mat4& vp, const glm::vec3& pPos);
 
     bool Raycast(const Ray& ray, BlockHitInfo& info) const;
 

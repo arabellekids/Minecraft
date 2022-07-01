@@ -58,10 +58,16 @@ public:
     T&       operator() (int x, int y, int z)       { return m_grid[(z*m_ySize + y)*m_xSize + x]; }
 };
 
-struct BlockFace
+class BlockFace
 {
+public:
+    BlockFace(unsigned int i, const glm::vec3& pos) : index(i), center(pos) {}
     unsigned int index;
     glm::vec3 center;
+
+    float dist = 0.0f;
+
+    bool operator< (const BlockFace& b) { return dist > b.dist; }
 };
 
 class Chunk
@@ -74,15 +80,17 @@ private:
     Vbo m_vb;
     Vao m_va;
     Ibo m_solidIB;
+    Ibo m_transparentIB;
 
     std::vector<BlockFace> m_solidFaces;
+    std::vector<BlockFace> m_transparentFaces;
+    
     //std::vector<BlockFace> m_transparentFaces;
 
     Grid3D<unsigned char> m_blocks;
 
     void GenBlockFace(float x, float y, float z, unsigned char block, BlockSide side);
     void GenBlock(int x, int y, int z, unsigned char block, Chunk* n, Chunk* s, Chunk* e, Chunk* w);
-    void SortFaces(const glm::vec3& pPos);
 public:
     Chunk();
     Chunk(const glm::ivec2& pos);
@@ -94,6 +102,9 @@ public:
     void GenerateVertices(const World& world);
     void GenerateIndices(const glm::vec3& pPos);
 
+    void RegenerateTransparency(const glm::vec3& pPos);
+    void SortFaces(const glm::vec3& pPos);
+
     const Vao& GetVa() const { return m_va; }
     Vao& GetVa() { return m_va; }
 
@@ -102,6 +113,9 @@ public:
 
     const Ibo& GetSolidIb() const { return m_solidIB; }
     Ibo& GetSolidIb() { return m_solidIB; }
+
+    const Ibo& GetTransparentIb() const { return m_transparentIB; }
+    Ibo& GetTransparentIb() { return m_transparentIB; }
 
     const glm::ivec2& GetPos() const { return m_pos; }
     glm::ivec2& GetPos() { return m_pos; }

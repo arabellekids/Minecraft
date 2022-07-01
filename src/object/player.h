@@ -21,6 +21,7 @@ private:
     Vao m_outlineCubeVa;
     Ibo m_outlineCubeIb;
     
+    int m_curBlock;
 public:
     Player();
     ~Player();

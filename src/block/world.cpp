@@ -31,7 +31,7 @@ World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", 
         for(auto x = 0; x < m_chunks.GetXSize(); ++x)
         {
             m_chunks(x,y) = std::make_unique<Chunk>( glm::ivec2(x,y) );
-            m_chunks(x,y)->Load( { x,y } );
+            m_chunks(x,y)->Load( m_offset );
         }
     }
 
@@ -95,46 +95,75 @@ void World::Update(Player& player)
     LoadChunks(player);
 }
 
-void World::RenderSolid(const glm::mat4& vp)
+void World::RenderSolid(const glm::mat4& vp, const glm::vec3& pPos)
 {
+    m_renderChunks.clear();
+
+    glm::vec3 pos(pPos.x + CHUNK_SIZE_X*0.5f, pPos.y, pPos.z + CHUNK_SIZE_Z*0.5f);
+    m_chunks(m_chunks.GetXSize() >> 1, m_chunks.GetYSize() >> 1)->RegenerateTransparency( pos );
+
+    // Sort the chunks
+    for(int z = 0; z < m_chunks.GetYSize(); ++z)
+    {
+        for(int x = 0; x < m_chunks.GetXSize(); ++x)
+        {
+            if(m_chunks(x,z)->GetLoading() == true) { continue; }
+
+            m_renderChunks.push_back( RenderChunk() );
+            m_renderChunks.back().chunk = m_chunks(x, z).get();
+
+            m_renderChunks.back().model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z });
+
+            float blockX = (x - m_chunks.GetXSize()*0.5f);
+            float blockZ = (z - m_chunks.GetYSize()*0.5f);
+
+            glm::vec2 toChunkCenter(blockX + 0.5f, blockZ + 0.5f);
+            float dist = glm::dot(toChunkCenter, toChunkCenter);
+
+            m_renderChunks.back().dist = dist;
+
+            if(dist > Settings::viewDist*Settings::viewDist)
+            {
+                m_renderChunks.pop_back();
+            }
+        }
+    }
+
+    std::sort(m_renderChunks.begin(), m_renderChunks.end());
+
     m_blockShader.Bind();
     m_blockAtlasTex.Bind();
     
     if(!Settings::wireframe)
     {
-        for(int z = 0; z < m_chunks.GetYSize(); ++z)
+        for(int i = 0; i < m_renderChunks.size(); ++i)
         {
-            for(int x = 0; x < m_chunks.GetXSize(); ++x)
-            {
-                if(m_chunks(x,z)->GetLoading() == true) { continue; }
-                
-                glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
-                m_blockShader.SetUniformMat4("u_mvp", vp * model);
+            m_blockShader.SetUniformMat4("u_mvp", vp * m_renderChunks[i].model);
 
-                m_chunks(x,z)->GetVa().Bind();
-                m_chunks(x,z)->GetSolidIb().Bind();
+            m_renderChunks[i].chunk->GetVa().Bind();
+            m_renderChunks[i].chunk->GetSolidIb().Bind();
 
-                glDrawElements(GL_TRIANGLES, m_chunks(x,z)->GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
-            }
+            glDrawElements(GL_TRIANGLES, m_renderChunks[i].chunk->GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
+
+            m_renderChunks[i].chunk->GetTransparentIb().Bind();
+
+            glDrawElements(GL_TRIANGLES, m_renderChunks[i].chunk->GetTransparentIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
         }
     }
     else
     {
-        for(int z = 0; z < m_chunks.GetYSize(); ++z)
+        for(int i = 0; i < m_renderChunks.size(); ++i)
         {
-            for(int x = 0; x < m_chunks.GetXSize(); ++x)
-            {
-                if(m_chunks(x,z)->GetLoading() == true) { continue; }
-                
-                glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), { (x - m_chunks.GetXSize()*0.5f) *CHUNK_SIZE_X*BS, 0, (z - m_chunks.GetYSize()*0.5f) *CHUNK_SIZE_Z*BS });
-                m_blockShader.SetUniformMat4("u_mvp", vp * model);
+            m_blockShader.SetUniformMat4("u_mvp", vp * m_renderChunks[i].model);
 
-                m_chunks(x,z)->GetVa().Bind();
-                m_chunks(x,z)->GetSolidIb().Bind();
+            m_renderChunks[i].chunk->GetVa().Bind();
+            m_renderChunks[i].chunk->GetSolidIb().Bind();
 
-                glDrawElements(GL_LINES, m_chunks(x,z)->GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
+            glDrawElements(GL_LINES, m_renderChunks[i].chunk->GetSolidIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
 
-            }
+            m_renderChunks[i].chunk->GetTransparentIb().Bind();
+
+            glDrawElements(GL_LINES, m_renderChunks[i].chunk->GetTransparentIb().GetData().size(), GL_UNSIGNED_SHORT, nullptr);
         }
     }
 }
@@ -175,8 +204,15 @@ void World::QueueChunk(long xPos, long zPos, int xChunk, int yChunk)
 
 void World::GenChunkBuffers(int x, int y, const glm::vec3& pPos)
 {
+    glm::vec3 pos(pPos.x + CHUNK_SIZE_X*0.5f, pPos.y, pPos.z + CHUNK_SIZE_Z*0.5f);
+    
     m_chunks(x,y)->GenerateVertices(*this);
-    m_chunks(x,y)->GenerateIndices( pPos );
+
+    auto blockPos = PosToBlock(pPos.x, pPos.y, pPos.z);
+    blockPos.x -= x * CHUNK_SIZE_X;
+    blockPos.z -= y * CHUNK_SIZE_Z;
+
+    m_chunks(x,y)->GenerateIndices( pos );
 }
 
 void World::GenNeighborChunkBuffers(int x, int y, const glm::vec3& pPos)
@@ -421,8 +457,8 @@ bool World::Raycast(const Ray& ray, BlockHitInfo& info) const
 
         if(!IsValidBlock(blockIndex.x, blockIndex.y, blockIndex.z)) { return false; }
 
-        auto& block = GetBlockType( GetBlockFromIndex(blockIndex.x, blockIndex.y, blockIndex.z) );
-        if(block.isSolid)
+        auto& block = GetBlockData( GetBlockFromIndex(blockIndex.x, blockIndex.y, blockIndex.z) );
+        if(block.isRayHitable)
         {
             info.pos = cells[0];
             info.neighbor = cells[1];

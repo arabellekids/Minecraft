@@ -27,7 +27,7 @@ App::App(int w, int h, bool fullscreen) : m_bRunning(false), m_pWindow(nullptr),
 
     // This should never be seen if the skybox is working correctly
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -40,9 +40,9 @@ App::App(int w, int h, bool fullscreen) : m_bRunning(false), m_pWindow(nullptr),
     // SDL_ShowCursor(SDL_DISABLE);
     // SDL_SetRelativeMouseMode(SDL_TRUE);
 
+    m_skybox = std::make_unique<Skybox>();
     m_world = std::make_unique<World>();
     m_player = std::make_unique<Player>();
-    m_skybox = std::make_unique<Skybox>();
 
     // Init successful
     m_bRunning = true;
@@ -102,7 +102,7 @@ void App::Run()
     glm::mat4 view(1.0f);
 
     while(m_bRunning)
-    {
+    {   
         HandleEvents();
         m_skybox->Update();
         m_player->Update();
@@ -116,7 +116,7 @@ void App::Run()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         m_skybox->Draw(vp, m_player->GetPos());
-        m_world->RenderSolid(vp);
+        m_world->RenderSolid(vp, m_player->GetPos());
         m_player->Draw(vp);
         
         SDL_GL_SwapWindow(m_pWindow);

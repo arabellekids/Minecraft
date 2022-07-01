@@ -12,6 +12,8 @@
 
 Player::Player() : m_outlineShader("assets/shaders/outline/vert.glsl", "assets/shaders/outline/frag.glsl"), m_outlineTex("assets/textures/outline.png", GL_NEAREST)
 {
+    m_curBlock = 1;
+
     m_outlineShader.SetUniform1f("u_tex", 0);
 
     auto verts = GetCubeVertices();
@@ -49,6 +51,14 @@ void Player::OnKeyDown(SDL_Scancode key)
         SDL_ShowCursor(SDL_ENABLE);
         SDL_SetRelativeMouseMode(SDL_FALSE);
     }
+    else if(key == SDL_SCANCODE_UP)
+    {
+        m_curBlock = (m_curBlock + 1) % GetBlockPalette().size();
+    }
+    else if(key == SDL_SCANCODE_DOWN)
+    {
+        m_curBlock = (m_curBlock - 1) % GetBlockPalette().size();
+    }
 }
 
 void Player::OnMouseButtonUp(Uint8 button)
@@ -75,7 +85,7 @@ void Player::OnMouseButtonUp(Uint8 button)
         BlockHitInfo info;
         if(App::Instance().GetWorld().Raycast(ray, info))
         {
-            App::Instance().GetWorld().SetBlockFromPos(info.neighbor.x, info.neighbor.y, info.neighbor.z, BLOCK_STONE);
+            App::Instance().GetWorld().SetBlockFromPos(info.neighbor.x, info.neighbor.y, info.neighbor.z, m_curBlock);
         }
     }
 }
@@ -151,9 +161,9 @@ void Player::Draw(const glm::mat4& vp)
         m_outlineTex.Bind();
         m_outlineShader.SetUniformMat4("u_mvp", vp * model);
 
-        m_outlineCubeIb.Bind();
         m_outlineCubeVa.Bind();
-
+        m_outlineCubeIb.Bind();
+        
         glDrawElements(GL_TRIANGLES, m_outlineCubeIb.GetData().size(), GL_UNSIGNED_SHORT, nullptr);
     }
 }

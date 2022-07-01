@@ -42,8 +42,8 @@ void Skybox::Draw(const glm::mat4& vp, const glm::vec3& camPos)
     m_shader.Bind();
     m_texture.Bind();
     
-    m_ib.Bind();
     m_va.Bind();
+    m_ib.Bind();
     
     m_shader.SetUniformMat4("u_mvp", vp * model);
     m_shader.SetUniform1f("u_time", m_skyTime);
