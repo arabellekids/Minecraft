@@ -70,10 +70,17 @@ public:
     bool operator< (const BlockFace& b) { return dist > b.dist; }
 };
 
+struct BlockPointData
+{
+    unsigned char block;
+    glm::ivec3 pos;
+};
+
 class Chunk
 {
 private:
     bool m_isLoading;
+    bool m_modified;
 
     glm::ivec2 m_pos;
 
@@ -84,13 +91,21 @@ private:
 
     std::vector<BlockFace> m_solidFaces;
     std::vector<BlockFace> m_transparentFaces;
-    
-    //std::vector<BlockFace> m_transparentFaces;
 
+    std::array<std::vector<BlockPointData>, 4> m_toDoBlocks;
+    
     Grid3D<unsigned char> m_blocks;
 
     void GenBlockFace(float x, float y, float z, unsigned char block, BlockSide side);
     void GenBlock(int x, int y, int z, unsigned char block, Chunk* n, Chunk* s, Chunk* e, Chunk* w);
+
+    void LoadBaseTerrain(const glm::i64vec2& pos);
+    void LoadLayers(const glm::i64vec2& pos);
+    void LoadDetails(const glm::i64vec2& pos);
+
+    void GenTree(int x, int y, int z);
+
+    void LoadBlock(int x, int y, int z, unsigned char block);
 public:
     Chunk();
     Chunk(const glm::ivec2& pos);
@@ -104,6 +119,8 @@ public:
 
     void RegenerateTransparency(const glm::vec3& pPos);
     void SortFaces(const glm::vec3& pPos);
+
+    void UpdateToDoList(World& world);
 
     const Vao& GetVa() const { return m_va; }
     Vao& GetVa() { return m_va; }
@@ -124,4 +141,8 @@ public:
 
     void SetLoading(bool loading) { m_isLoading = loading; }
     bool GetLoading() const { return m_isLoading; }
+
+    void SetModified(bool modified) { m_modified = modified; }
+    bool GetModified() const { return m_modified; }
+
 };

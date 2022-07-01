@@ -49,25 +49,6 @@ World::~World() {}
 
 void World::Update(Player& player)
 {
-    // if(Input::Instance().GetKey(SDL_SCANCODE_UP))
-    // {
-    //     ShiftGrid(BLOCK_SIDE_FRONT, player);
-    // }
-    // if(Input::Instance().GetKey(SDL_SCANCODE_DOWN))
-    // {
-    //     ShiftGrid(BLOCK_SIDE_BACK, player);
-    // }
-    // if(Input::Instance().GetKey(SDL_SCANCODE_LEFT))
-    // {
-    //     ShiftGrid(BLOCK_SIDE_LEFT, player);
-    // }
-    // if(Input::Instance().GetKey(SDL_SCANCODE_RIGHT))
-    // {
-    //     ShiftGrid(BLOCK_SIDE_RIGHT, player);
-    // }
-    
-    // return;
-
     // Player crossed forward
     while(player.GetPos().z > (CHUNK_SIZE_Z * BS * 0.5f))
     {
@@ -93,6 +74,35 @@ void World::Update(Player& player)
     }
 
     LoadChunks(player);
+
+    // Update chunks toDo lists
+    for(int z = 0; z < m_chunks.GetYSize(); ++z)
+    {
+        for(int x = 0; x < m_chunks.GetXSize(); ++x)
+        {
+            m_chunks(x, z)->UpdateToDoList(*this);
+        }
+    }
+
+    // Update the chunks buffers
+    for(int z = 0; z < m_chunks.GetYSize(); ++z)
+    {
+        for(int x = 0; x < m_chunks.GetXSize(); ++x)
+        {
+            if(m_chunks(x, z)->GetModified())
+            {
+                GenChunkBuffers(x, z, player.GetPos());
+
+                // Regenerate non-modified neighbors, since the modified ones will already get regenerated
+                if(IsValidChunk(x - 1, z) && !m_chunks(x - 1, z)->GetModified()) { GenChunkBuffers(x - 1, z, player.GetPos()); }
+                if(IsValidChunk(x + 1, z) && !m_chunks(x + 1, z)->GetModified()) { GenChunkBuffers(x + 1, z, player.GetPos()); }
+                if(IsValidChunk(x, z - 1) && !m_chunks(x, z - 1)->GetModified()) { GenChunkBuffers(x, z - 1, player.GetPos()); }
+                if(IsValidChunk(x, z + 1) && !m_chunks(x, z + 1)->GetModified()) { GenChunkBuffers(x, z + 1, player.GetPos()); }
+
+                m_chunks(x, z)->SetModified(false);
+            }
+        }
+    }
 }
 
 void World::RenderSolid(const glm::mat4& vp, const glm::vec3& pPos)
@@ -204,6 +214,8 @@ void World::QueueChunk(long xPos, long zPos, int xChunk, int yChunk)
 
 void World::GenChunkBuffers(int x, int y, const glm::vec3& pPos)
 {
+    if(m_chunks(x, y)->GetLoading()) { return; }
+    
     glm::vec3 pos(pPos.x + CHUNK_SIZE_X*0.5f, pPos.y, pPos.z + CHUNK_SIZE_Z*0.5f);
     
     m_chunks(x,y)->GenerateVertices(*this);
@@ -213,14 +225,6 @@ void World::GenChunkBuffers(int x, int y, const glm::vec3& pPos)
     blockPos.z -= y * CHUNK_SIZE_Z;
 
     m_chunks(x,y)->GenerateIndices( pos );
-}
-
-void World::GenNeighborChunkBuffers(int x, int y, const glm::vec3& pPos)
-{
-    if(IsValidChunk(x - 1, y)) { GenChunkBuffers(x - 1, y, pPos); }
-    if(IsValidChunk(x + 1, y)) { GenChunkBuffers(x + 1, y, pPos); }
-    if(IsValidChunk(x, y - 1)) { GenChunkBuffers(x, y - 1, pPos); }
-    if(IsValidChunk(x, y + 1)) { GenChunkBuffers(x, y + 1, pPos); }
 }
 
 void World::ShiftGrid(BlockSide dir, Player& player)
@@ -352,11 +356,6 @@ void World::SetBlockFromIndex(int x, int y, int z, unsigned char block)
     int yChunk = z / CHUNK_SIZE_Z;
 
     m_chunks(xChunk, yChunk)->SetBlock(x % CHUNK_SIZE_X, y, z % CHUNK_SIZE_Z, block, *this);
-
-    GenChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
-
-    // Regenerate neighbors
-    GenNeighborChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
 }
 
 void World::SetBlockFromPos(float x, float y, float z, unsigned char block)
@@ -372,11 +371,6 @@ void World::SetBlockFromPos(float x, float y, float z, unsigned char block)
     int yChunk = index.z / CHUNK_SIZE_Z;
 
     m_chunks(xChunk, yChunk)->SetBlock(index.x % CHUNK_SIZE_X, index.y, index.z % CHUNK_SIZE_Z, block, *this);
-
-    GenChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
-
-    // Regenerate neighbors
-    GenNeighborChunkBuffers(xChunk, yChunk, App::Instance().GetPlayer().GetPos());
 }
 
 glm::ivec3 World::PosToBlock(float x, float y, float z) const

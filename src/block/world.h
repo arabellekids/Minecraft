@@ -93,17 +93,10 @@ private:
     const int m_chunkLoadLimit = 1;
 
     void GenChunkBuffers(int x, int y, const glm::vec3& pPos);
-    void GenNeighborChunkBuffers(int x, int y, const glm::vec3& pPos);
     
     void ShiftGrid(BlockSide dir, Player& player);
     void LoadChunks(Player& player);
     void QueueChunk(long xPos, long zPos, int xChunk, int yChunk);
-
-    bool IsValidChunk(int x, int y) const;
-    bool IsValidBlock(int x, int y, int z) const;
-
-    glm::ivec3 PosToBlock(float x, float y, float z) const;
-    glm::vec3 BlockToPos(int x, int y, int z) const;
 public:
     World();
     ~World();
@@ -119,4 +112,9 @@ public:
     void SetBlockFromPos(float x, float y, float z, unsigned char block);
     void SetBlockFromIndex(int x, int y, int z, unsigned char block);
     
+    bool IsValidChunk(int x, int y) const;
+    bool IsValidBlock(int x, int y, int z) const;
+
+    glm::ivec3 PosToBlock(float x, float y, float z) const;
+    glm::vec3 BlockToPos(int x, int y, int z) const;
 };

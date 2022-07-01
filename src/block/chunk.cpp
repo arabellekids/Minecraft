@@ -1,8 +1,10 @@
 #include <algorithm>
-#include <cmath>
 
 #include <GLES3/gl32.h>
 #include <iostream>
+
+#define STB_DEFINE
+#include <stb/stb.h>
 
 #include "chunk.h"
 #include "../settings/settings.h"
@@ -12,9 +14,10 @@
 #define min(x,y) (x < y) ? (x) : (y)
 #define abs(x) ((x) > 0) ? (x) : (-x)
 
-Chunk::Chunk() : m_pos(0, 0), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
+Chunk::Chunk() : m_pos(0, 0), m_toDoBlocks({{ {}, {}, {}, {} }}), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
     m_isLoading = false;
+    m_modified = true;
     
     BufferLayout layout;
     layout.Push<float>(3); // x,y,z
@@ -24,9 +27,10 @@ Chunk::Chunk() : m_pos(0, 0), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
     m_va.AddBuffer(m_vb, layout);
 }
 
-Chunk::Chunk(const glm::ivec2& pos) : m_pos(pos), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
+Chunk::Chunk(const glm::ivec2& pos) : m_pos(pos), m_toDoBlocks({{ {}, {}, {}, {} }}), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
     m_isLoading = false;
+    m_modified = true;
     
     BufferLayout layout;
     layout.Push<float>(3); // x,y,z
@@ -40,7 +44,13 @@ Chunk::~Chunk() {}
 
 void Chunk::Load(const glm::i64vec2& pos)
 {
-    //std::cout << "pos = { x = " << pos.x << ", y = " << pos.y << " }\n";
+    LoadBaseTerrain(pos);
+    LoadLayers(pos);
+    LoadDetails(pos);
+}
+
+void Chunk::LoadBaseTerrain(const glm::i64vec2& pos)
+{
     long chunkX = (m_pos.x + pos.x) * CHUNK_SIZE_X;
     long chunkZ = (m_pos.y + pos.y) * CHUNK_SIZE_Z;
 
@@ -73,8 +83,10 @@ void Chunk::Load(const glm::i64vec2& pos)
             }
         }
     }
+}
 
-    // Add grass
+void Chunk::LoadLayers(const glm::i64vec2& pos)
+{
     for(int z = 0; z < CHUNK_SIZE_Z; ++z)
     {
         for(int x = 0; x < CHUNK_SIZE_X; ++x)
@@ -83,6 +95,7 @@ void Chunk::Load(const glm::i64vec2& pos)
             for(int y = CHUNK_SIZE_Y - 1; y > 0; --y)
             {
                 const auto& data = GetBlockData(m_blocks(x,y,z));
+                
                 if(data.type == BlockType::Solid)
                 {
                     if(y < CHUNK_SIZE_Y && m_blocks(x,y + 1,z) == BLOCK_AIR)
@@ -96,6 +109,66 @@ void Chunk::Load(const glm::i64vec2& pos)
                     grassLayers++;
 
                     if(grassLayers >= 5) { break; }
+                }
+            }
+        }
+    }
+}
+
+void Chunk::LoadDetails(const glm::i64vec2& pos)
+{
+    stb_srand((m_pos.x + pos.x) + (m_pos.y + pos.y));
+
+    for(int z = 0; z < CHUNK_SIZE_Z; ++z)
+    {
+        for(int x = 0; x < CHUNK_SIZE_X; ++x)
+        {
+            bool hasTree = (stb_frand() < 0.01);
+            if(!hasTree) { continue; }
+
+            for(int y = CHUNK_SIZE_Y - 1; y > 0; --y)
+            {
+                if(m_blocks(x,y,z) == BLOCK_GRASS)
+                {
+                    m_blocks(x,y,z) = BLOCK_DIRT;
+
+                    GenTree(x, y + 1, z);
+                    break;
+                }
+            }
+        }
+    }
+
+}
+
+void Chunk::GenTree(int x, int y, int z)
+{
+    // LogHeight is from 4-6 blocks
+    int logHeight = stb_frand() * 2 + 4;
+    
+    // Generate the log
+    for(int i = 0; i < logHeight; ++i)
+    {
+        LoadBlock(x, y + i, z, BLOCK_OAKLOG);
+    }
+
+    // Generate the leaves
+    float leafRadius = stb_frand() * 2 + 2;
+    glm::ivec3 logTipPos(x, y + logHeight - 1, z);
+
+    for(int lx = -leafRadius; lx <= leafRadius; ++lx)
+    {
+        for(int lz = -leafRadius; lz <= leafRadius; ++lz)
+        {
+            for(int ly = 0; ly <= leafRadius; ++ly)
+            {
+                glm::ivec3 leafPos(x + lx, logTipPos.y + ly, z + lz );
+                glm::vec3 toTip = logTipPos - leafPos;
+                float dist = glm::dot(toTip, toTip);
+
+                if(dist > 0 && dist < leafRadius*leafRadius)
+                {
+                    LoadBlock(leafPos.x, leafPos.y, leafPos.z, BLOCK_OAKLEAVES);
                 }
             }
         }
@@ -237,6 +310,37 @@ void Chunk::RegenerateTransparency(const glm::vec3& pPos)
     m_transparentIB.DynamicBufferData(m_transparentIB.GetData(), false);
 }
 
+void Chunk::UpdateToDoList(World& world)
+{
+    //int listLength = m_toDoBlocks.size();
+    for(int side = 0; side < 4; ++side)
+    {
+        int xOffset = 0;
+        int yOffset = 0;
+
+        if(side == BLOCK_SIDE_FRONT) { xOffset = 0; yOffset = 1; }
+        else if(side == BLOCK_SIDE_BACK) { xOffset = 0; yOffset = -1; }
+        else if(side == BLOCK_SIDE_LEFT) { xOffset = -1; yOffset = 0; }
+        else if(side == BLOCK_SIDE_RIGHT) { xOffset = 1; yOffset = 0; }
+
+        glm::ivec2 blockChunk(m_pos.x + xOffset, m_pos.y + yOffset);
+
+        // Chunk is valid to set blocks
+        if(world.IsValidChunk(blockChunk.x, blockChunk.y) && !m_toDoBlocks[side].empty())
+        {
+            for(int i = 0; i < m_toDoBlocks[side].size(); ++i)
+            {
+                glm::ivec3 setPos(m_toDoBlocks[side][i].pos.x + m_pos.x * CHUNK_SIZE_X,
+                m_toDoBlocks[side][i].pos.y,
+                m_toDoBlocks[side][i].pos.z + m_pos.y * CHUNK_SIZE_Z);
+
+                world.SetBlockFromIndex(setPos.x, setPos.y, setPos.z, m_toDoBlocks[side][i].block);
+            }
+            m_toDoBlocks[side].clear();
+        }
+    }
+}
+
 unsigned char Chunk::GetBlock(int x, int y, int z, const World& world) const
 {
     if(x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE_X && y < CHUNK_SIZE_Y && z < CHUNK_SIZE_Z)
@@ -252,8 +356,25 @@ void Chunk::SetBlock(int x, int y, int z, unsigned char block, World& world)
     if(x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE_X && y < CHUNK_SIZE_Y && z < CHUNK_SIZE_Z)
     {
         m_blocks(x,y,z) = block;
+        m_modified = true;
         return;
     }
 
     world.SetBlockFromIndex(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z, block);
+}
+
+void Chunk::LoadBlock(int x, int y, int z, unsigned char block)
+{
+    if(y < 0 || y >= CHUNK_SIZE_Y) { return; }
+    
+    if(x >= 0 && z >= 0 && x < CHUNK_SIZE_X && z < CHUNK_SIZE_Z)
+    {
+        m_blocks(x,y,z) = block;
+    }
+
+    // Todo: Add out of bounds blocks to a list to load later, like tree leaves
+    if(x < 0) { m_toDoBlocks[BLOCK_SIDE_LEFT].push_back( {block, {x, y, z}} ); }
+    else if(x >= CHUNK_SIZE_X) { m_toDoBlocks[BLOCK_SIDE_RIGHT].push_back( {block, {x, y, z}} ); }
+    else if(z < 0) { m_toDoBlocks[BLOCK_SIDE_BACK].push_back( {block, {x, y, z}} ); }
+    else if(z >= CHUNK_SIZE_Z) { m_toDoBlocks[BLOCK_SIDE_FRONT].push_back( {block, {x, y, z}} ); }
 }
