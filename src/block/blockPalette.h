@@ -37,6 +37,7 @@ struct BlockData
 
     float height = 1.0f;
     bool isRayHitable = true;
+    unsigned char emmisive = 0;
 };
 
 const std::vector<BlockData>& GetBlockPalette();

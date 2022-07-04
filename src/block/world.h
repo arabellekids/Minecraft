@@ -109,6 +109,8 @@ public:
     unsigned char GetBlockFromPos(float x, float y, float z) const;
     unsigned char GetBlockFromIndex(int x, int y, int z) const;
 
+    unsigned char GetLightFromIndex(int x, int y, int z) const;
+
     void SetBlockFromPos(float x, float y, float z, unsigned char block);
     void SetBlockFromIndex(int x, int y, int z, unsigned char block);
     

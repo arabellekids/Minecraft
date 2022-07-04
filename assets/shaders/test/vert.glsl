@@ -13,5 +13,6 @@ void main()
 {
     gl_Position =  u_mvp * a_pos;
     v_texCoord = a_uv;
+
     v_light = a_light;
 };

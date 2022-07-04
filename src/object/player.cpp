@@ -12,6 +12,7 @@
 
 Player::Player() : m_outlineShader("assets/shaders/outline/vert.glsl", "assets/shaders/outline/frag.glsl"), m_outlineTex("assets/textures/outline.png", GL_NEAREST)
 {
+    m_pos.y = 64.0f;
     m_curBlock = 1;
 
     m_outlineShader.SetUniform1f("u_tex", 0);

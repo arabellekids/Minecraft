@@ -31,16 +31,7 @@ World::World() : m_chunks(0, 0), m_blockShader("assets/shaders/test/vert.glsl", 
         for(auto x = 0; x < m_chunks.GetXSize(); ++x)
         {
             m_chunks(x,y) = std::make_unique<Chunk>( glm::ivec2(x,y) );
-            m_chunks(x,y)->Load( m_offset );
-        }
-    }
-
-    // Then generate the buffers
-    for(auto y = 0; y < m_chunks.GetYSize(); ++y)
-    {
-        for(auto x = 0; x < m_chunks.GetXSize(); ++x)
-        {
-            GenChunkBuffers(x,y, { 0.0f, 0.0f, 0.0f } );
+            QueueChunk(m_offset.x, m_offset.y, x,y);
         }
     }
 }
@@ -89,7 +80,7 @@ void World::Update(Player& player)
     {
         for(int x = 0; x < m_chunks.GetXSize(); ++x)
         {
-            if(m_chunks(x, z)->GetModified())
+            if(m_chunks(x, z)->GetModified() && !m_chunks(x, z)->GetLoading())
             {
                 GenChunkBuffers(x, z, player.GetPos());
 
@@ -191,14 +182,6 @@ void World::LoadChunks(Player& player)
         m_chunks(chunkX, chunkY)->SetLoading(false);
 
         m_chunks(chunkX, chunkY)->Load(m_loadingChunks[i]->pos);
-        GenChunkBuffers(chunkX, chunkY, player.GetPos());
-
-        // Update the chunks 4 neighbors
-        
-        if(IsValidChunk(chunkX - 1, chunkY)) { GenChunkBuffers(chunkX - 1, chunkY, player.GetPos()); }
-        if(IsValidChunk(chunkX + 1, chunkY)) { GenChunkBuffers(chunkX + 1, chunkY, player.GetPos()); }
-        if(IsValidChunk(chunkX, chunkY - 1)) { GenChunkBuffers(chunkX, chunkY - 1, player.GetPos()); }
-        if(IsValidChunk(chunkX, chunkY + 1)) { GenChunkBuffers(chunkX, chunkY + 1, player.GetPos()); }
         
         m_loadingChunks.pop_back();
     }
@@ -328,6 +311,19 @@ unsigned char World::GetBlockFromIndex(int x, int y, int z) const
     int yChunk = z / CHUNK_SIZE_Z;
 
     return m_chunks(xChunk, yChunk)->GetBlock(x % CHUNK_SIZE_X, y, z % CHUNK_SIZE_Z, *this);
+}
+
+unsigned char World::GetLightFromIndex(int x, int y, int z) const
+{
+    if(!IsValidBlock(x, y, z))
+    {
+        return 0;
+    }
+
+    int xChunk = x / CHUNK_SIZE_X;
+    int yChunk = z / CHUNK_SIZE_Z;
+
+    return m_chunks(xChunk, yChunk)->GetLight(x % CHUNK_SIZE_X, y, z % CHUNK_SIZE_Z, *this);
 }
 
 unsigned char World::GetBlockFromPos(float x, float y, float z) const

@@ -14,8 +14,11 @@
 #define min(x,y) (x < y) ? (x) : (y)
 #define abs(x) ((x) > 0) ? (x) : (-x)
 
-Chunk::Chunk() : m_pos(0, 0), m_toDoBlocks({{ {}, {}, {}, {} }}), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
+Chunk::Chunk() : m_pos(0, 0), m_toDoBlocks({{ {}, {}, {}, {} }}),
+m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z), m_lighting(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
+    m_lighting.Fill(0x00);
+
     m_isLoading = false;
     m_modified = true;
     
@@ -27,8 +30,11 @@ Chunk::Chunk() : m_pos(0, 0), m_toDoBlocks({{ {}, {}, {}, {} }}), m_blocks(CHUNK
     m_va.AddBuffer(m_vb, layout);
 }
 
-Chunk::Chunk(const glm::ivec2& pos) : m_pos(pos), m_toDoBlocks({{ {}, {}, {}, {} }}), m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
+Chunk::Chunk(const glm::ivec2& pos) : m_pos(pos), m_toDoBlocks({{ {}, {}, {}, {} }}),
+m_blocks(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z), m_lighting(CHUNK_SIZE_X, CHUNK_SIZE_Y, CHUNK_SIZE_Z)
 {
+    m_lighting.Fill(0x00);
+    
     m_isLoading = false;
     m_modified = true;
     
@@ -47,6 +53,10 @@ void Chunk::Load(const glm::i64vec2& pos)
     LoadBaseTerrain(pos);
     LoadLayers(pos);
     LoadDetails(pos);
+
+    //CalcLighting();
+
+    m_modified = true;
 }
 
 void Chunk::LoadBaseTerrain(const glm::i64vec2& pos)
@@ -64,6 +74,7 @@ void Chunk::LoadBaseTerrain(const glm::i64vec2& pos)
             for(int y = 0; y < CHUNK_SIZE_Y; ++y)
             {
                 float density = Settings::noise.noise3D((chunkX + x) * 0.0625f, y * 0.0625f, (chunkZ + z) * 0.0625f) + (heightOffset - y)*squashingFactor;
+                //float density = (heightOffset - y)*squashingFactor;
 
                 if(density > 0)
                 {
@@ -153,7 +164,7 @@ void Chunk::GenTree(int x, int y, int z)
     }
 
     // Generate the leaves
-    float leafRadius = stb_frand() * 2 + 2;
+    float leafRadius = (float)stb_frand() * 2 + 2;
     glm::ivec3 logTipPos(x, y + logHeight - 1, z);
 
     for(int lx = -leafRadius; lx <= leafRadius; ++lx)
@@ -177,6 +188,8 @@ void Chunk::GenTree(int x, int y, int z)
 
 void Chunk::GenerateVertices(const World& world)
 {
+    CalcLighting(world);
+    
     m_vb.GetData().clear();
     m_solidFaces.clear();
     m_transparentFaces.clear();
@@ -236,13 +249,15 @@ void Chunk::GenerateVertices(const World& world)
                     unsigned int faceIndex = m_vb.GetData().size() >> 2;
                     faces.push_back( BlockFace(faceIndex, glm::vec3(x+blockFaces[side].x, y+blockFaces[side].y*height, z+blockFaces[side].z)) );
 
+                    float light = m_lighting(x, y, z) / 15.0f;
+
                     // Add the 4 vertices of the quad
                     for(int i = 0; i < 4; ++i)
                     {
                         m_vb.GetData().push_back( {
                             blockVerts[side][i].x + x, blockVerts[side][i].y*height + y, blockVerts[side][i].z + z,
                             blockVerts[side][i].u + u, blockVerts[side][i].v + v,
-                            blockVerts[side][i].light
+                            blockVerts[side][i].light * light
                         } );
                     } // end loop i
 
@@ -341,6 +356,127 @@ void Chunk::UpdateToDoList(World& world)
     }
 }
 
+void Chunk::CalcLighting(const World& world)
+{
+    m_lighting.Fill(0);
+    
+    // Spread the sunlight
+    for(int z = 0; z < CHUNK_SIZE_Z; ++z)
+    {
+        for(int x = 0; x < CHUNK_SIZE_X; ++x)
+        {
+            unsigned char sunlight = 15;
+            for(int y = CHUNK_SIZE_Y - 1; y >= 0; --y)
+            {
+                auto& data = GetBlockData( m_blocks(x, y, z) );
+                m_lighting(x, y, z) = max(sunlight, data.emmisive);
+
+                if(sunlight > 0 && data.type == BlockType::Solid)
+                {
+                    sunlight = 0;
+                }
+            }
+        }    
+    }
+    
+    std::array< glm::ivec3, 3> neighbors = {
+        glm::ivec3( 0,  1,  0),
+        glm::ivec3(-1,  0,  0),
+        glm::ivec3( 0,  0, -1)
+    };
+
+    // Spread the light right-down
+    for(int z = 0; z < CHUNK_SIZE_Z; ++z)
+    {
+        for(int y = CHUNK_SIZE_Y - 1; y >= 0; --y)
+        {    
+            for(int x = 0; x < CHUNK_SIZE_X; ++x)
+            {
+                m_lighting(x, y, z) = CalcLightAt(x, y, z, neighbors, world);
+            }
+        }
+    }
+
+    neighbors = {
+        glm::ivec3( 0, -1,  0),
+        glm::ivec3( 1,  0,  0),
+        glm::ivec3( 0,  0,  1)
+    };
+
+    // Spread the light left-up
+    for(int z = CHUNK_SIZE_Z - 1; z >= 0; --z)
+    {
+        for(int y = 0; y < CHUNK_SIZE_Y; ++y)
+        {
+            for(int x = CHUNK_SIZE_X - 1; x >= 0; --x)
+            {
+                m_lighting(x, y, z) = CalcLightAt(x, y, z, neighbors, world);
+            }
+        }    
+    }
+
+    neighbors = {
+        glm::ivec3( 0,  1,  0),
+        glm::ivec3(-1,  0,  0),
+        glm::ivec3( 0,  0, -1)
+    };
+
+    // Spread the light right-down
+    for(int x = 0; x < CHUNK_SIZE_X; ++x)
+    {
+        for(int y = CHUNK_SIZE_Y - 1; y >= 0; --y)
+        {    
+            for(int z = 0; z < CHUNK_SIZE_Z; ++z)
+            {
+                m_lighting(x, y, z) = CalcLightAt(x, y, z, neighbors, world);
+            }
+        }
+    }
+
+    neighbors = {
+        glm::ivec3( 0, -1,  0),
+        glm::ivec3( 1,  0,  0),
+        glm::ivec3( 0,  0,  1)
+    };
+
+    // Spread the light left-up
+    for(int x = CHUNK_SIZE_X - 1; x >= 0; --x)
+    {
+        for(int y = 0; y < CHUNK_SIZE_Y; ++y)
+        {
+            for(int z = CHUNK_SIZE_Z - 1; z >= 0; --z)
+            {
+                m_lighting(x, y, z) = CalcLightAt(x, y, z, neighbors, world);
+            }
+        }    
+    }
+}
+
+unsigned char Chunk::CalcLightAt(int x, int y, int z, const std::array<glm::ivec3, 3>& directions, const World& world)
+{
+    unsigned char light = m_lighting(x, y, z);
+    if(light == 15) { return 15; }
+
+    for(int i = 0; i < directions.size(); ++i)
+    {
+        auto& dir = directions[i];
+        glm::ivec3 pos(x + dir.x, y + dir.y, z + dir.z);
+
+        auto& data = GetBlockData( GetBlock(pos.x, pos.y, pos.z, world) );
+        unsigned char neighborLight = (data.type != BlockType::Solid) ? GetLight(pos.x, pos.y, pos.z, world) : 0;
+        if(neighborLight == 0) { continue; }
+
+        light = max( neighborLight - 1, light);
+    }
+
+    return light;
+}
+
+bool Chunk::IsValidBlock(int x, int y, int z)
+{
+    return (x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE_X && y < CHUNK_SIZE_Y && z < CHUNK_SIZE_Z);
+}
+
 unsigned char Chunk::GetBlock(int x, int y, int z, const World& world) const
 {
     if(x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE_X && y < CHUNK_SIZE_Y && z < CHUNK_SIZE_Z)
@@ -349,6 +485,16 @@ unsigned char Chunk::GetBlock(int x, int y, int z, const World& world) const
     }
 
     return world.GetBlockFromIndex(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z);
+}
+
+unsigned char Chunk::GetLight(int x, int y, int z, const World& world) const
+{
+    if(x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE_X && y < CHUNK_SIZE_Y && z < CHUNK_SIZE_Z)
+    {
+        return m_lighting(x,y,z);
+    }
+
+    return world.GetLightFromIndex(x + m_pos.x * CHUNK_SIZE_X, y, z + m_pos.y * CHUNK_SIZE_Z);
 }
 
 void Chunk::SetBlock(int x, int y, int z, unsigned char block, World& world)

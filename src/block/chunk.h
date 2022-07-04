@@ -95,9 +95,7 @@ private:
     std::array<std::vector<BlockPointData>, 4> m_toDoBlocks;
     
     Grid3D<unsigned char> m_blocks;
-
-    void GenBlockFace(float x, float y, float z, unsigned char block, BlockSide side);
-    void GenBlock(int x, int y, int z, unsigned char block, Chunk* n, Chunk* s, Chunk* e, Chunk* w);
+    Grid3D<unsigned char> m_lighting;
 
     void LoadBaseTerrain(const glm::i64vec2& pos);
     void LoadLayers(const glm::i64vec2& pos);
@@ -105,13 +103,20 @@ private:
 
     void GenTree(int x, int y, int z);
 
+    void CalcLighting(const World& world);
+    unsigned char CalcLightAt(int x, int y, int z, const std::array<glm::ivec3, 3>& directions, const World& world);
+
     void LoadBlock(int x, int y, int z, unsigned char block);
+
+    bool IsValidBlock(int x, int y, int z);
 public:
     Chunk();
     Chunk(const glm::ivec2& pos);
     ~Chunk();
 
     unsigned char GetBlock(int x, int y, int z, const World& world) const;
+    unsigned char GetLight(int x, int y, int z, const World& world) const;
+
     void SetBlock(int x, int y, int z, unsigned char block, World& world);
 
     void GenerateVertices(const World& world);
