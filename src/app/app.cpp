@@ -35,6 +35,8 @@ App::App(int w, int h, bool fullscreen) : m_bRunning(false), m_pWindow(nullptr),
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
+    glEnable(GL_DEPTH_TEST);
+
     m_projection = glm::perspectiveLH(90.0f * 0.01745329251994329576923690768489f, (float)w / (float)h, 0.2f, 200.0f);
 
     // SDL_ShowCursor(SDL_DISABLE);
